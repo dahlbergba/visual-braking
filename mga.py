@@ -18,7 +18,7 @@ class Microbial():
         self.dateCreated = str(date.today())
         self.dateEdited = str(date.today())
 
-    def showFitness(self, savename=''):
+    def showFitnessSummary(self, savename=''):
         plt.plot(self.bestHistory, label="Best")
         plt.plot(self.avgHistory, label="Average")
         plt.xlabel("Generations")
@@ -29,8 +29,8 @@ class Microbial():
         if savename !='':
             plt.savefig(savename)
             
-    def showFitness2(self, savename=''):
-        plt.plot(self.popHistory,alpha=0.1)
+    def showFitnessTrajectories(self, savename='', _alpha=0.1):
+        plt.plot(self.popHistory, alpha=_alpha)
         plt.plot(self.bestHistory, label="Best")
         plt.plot(self.avgHistory, label="Average")
         plt.xlabel("Generations")
