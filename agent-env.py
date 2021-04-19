@@ -23,12 +23,12 @@ class Agent():
         self.Distance = 0.   # Distance from agent to target (m) 
 
         # OPTICAL ATTRIBUTES
-        self.Optical_variable = 5   # Which optical variable is this agent paying attention to? (0-4)
-        self.Optical_info = [math.atan(self.Target_size/self.Distance), # (0) Image size
-                             0.,                                        # (1) Image expansion rate
-                             999999.,                                   # (2) Tau
-                             0.,                                        # (3) Tau-dot
-                             999999.]                                   # (4) Proportional rate (PR)
+        self.Optical_variable = 0   # Which optical variable is this agent paying attention to? (0-4)
+        self.Optical_info = [1.,        # (0) Image size
+                             1.,        # (1) Image expansion rate
+                             1.,        # (2) Tau
+                             1.,        # (3) Tau-dot
+                             1.]        # (4) Proportional rate (PR)
         
         # DATA
         self.Brakemap_history = []
@@ -38,7 +38,22 @@ class Agent():
         self.Optical_history = []
         
                 
-    def sense(self):
+    def setInitialState(self, velocity, distance, target_size):  # Simulate a few moments of constant motion to initialize the optical variables
+        steps = 3   # 3 steps is all that is required for the values of the optical information to stabilize
+        self.Velocity = velocity
+        self.Distance = distance + (steps*self.Dt*self.Velocity)    # Set back initial distance some amount to allow for initial constant motion
+        self.Target_size = target_size
+        for step in range(steps):
+            self.sense()    # Calculate optical variables
+            self.Distance -= self.Velocity * self.Dt    # Move
+            
+            print(step) 
+            print(self.Distance)
+            print(self.Optical_info)
+            print('####################  \n')
+        
+        
+    def sense(self): # Update optical variables and pass to NN controller
         
         #Calculate optical variables
         image_size = math.atan(self.Target_size/self.Distance)        
@@ -49,14 +64,14 @@ class Agent():
         self.Optical_info = [image_size, image_expansion_rate, tau, tau_dot, PR]
         
         # Feed relevant optical variable to NN
-        self.NN.Input = np.full(self.NN.Size, self.Optical_info[self.optical_variable])   # Vector of length Size full of the selected optical variable
+        self.NN.Input = np.full(self.NN.Size, self.Optical_info[self.Optical_variable])   # Vector of length Size full of the selected optical variable
     
     
-    def think(self):    #   Integrate NN
+    def think(self):    #   Integrate NN controller
         self.nn.step(self.Dt)
    
     
-    def act(self):
+    def act(self):  # Fetch output from NN controller, calculate action, update agent and environment
         
         # Calculate acceleration
         motor = 0  # Which neuron is the motor neuron (this is arbitrary, really) 
