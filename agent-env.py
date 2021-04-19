@@ -46,12 +46,7 @@ class Agent():
         for step in range(steps):
             self.sense()    # Calculate optical variables
             self.Distance -= self.Velocity * self.Dt    # Move
-            
-            print(step) 
-            print(self.Distance)
-            print(self.Optical_info)
-            print('####################  \n')
-        
+                    
         
     def sense(self): # Update optical variables and pass to NN controller
         
