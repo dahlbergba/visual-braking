@@ -36,7 +36,6 @@ class AgentEnv():
         self.Brakemap_history = []
 
         
-                
     def setInitialState(self, velocity, distance, target_size):  # Simulate a few moments of constant motion to initialize the optical variables
         steps = 3   # 3 steps is all that is required for the values of the optical information to stabilize
         self.Velocity = velocity
@@ -68,7 +67,7 @@ class AgentEnv():
         # Calculate acceleration
         motor = 0  # Which neuron is the motor neuron (this is arbitrary, really) 
         output = self.NN.Output[motor]
-        self.acceleration = (-1) * self.Brake_constant * output * self.Brake_effectiveness
+        self.Acceleration = (-1) * self.Brake_constant * output * self.Brake_effectiveness
         
         # Calculate velocity 
         self.Velocity += self.Acceleration * self.Dt
