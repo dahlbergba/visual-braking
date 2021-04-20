@@ -78,24 +78,23 @@ class AgentEnv():
         self.Brakemap_history.append(self.Brake_effectiveness)
 
 
-    def showTrajectory(self, velocity, distance, target_size, optical_variable, trial_length):
-#    def showTrajectory(self, velocity, distance, target_size, optical_variable, trial_length, brakemap=True):
+    def showTrajectory(self, optical_variable, target_size, distance, velocity, trial_length=100, brakemap=True):
 
         Acceleration_history = []
         Velocity_history = []
         Distance_history = []
         Optical_history = []
-#        Brakemap_history = []
+        Brakemap_history = []
         #Generate data
         self.setInitialState(velocity, distance, target_size)
         self.Optical_variable = optical_variable
         self.Time = 0
-#        i = 0 
+        i = 0 
         # While distance is still positive, agent is still moving forward significantly, and not too much time has elapsed
         while (self.Distance > 0) and (self.Velocity > 0.005) and (self.Time < trial_length):
-#            if brakemap == False:   # If not using a constant brakemapping, then modify brakemapping and iterate
-#                self.brake_effectiveness = brakemap[i]
-#                i += 1
+            if brakemap == False:   # If not using a constant brakemapping, then modify brakemapping and iterate
+                self.brake_effectiveness = brakemap[i]
+                i += 1
             self.sense()
             self.think()
             self.act()
@@ -103,14 +102,12 @@ class AgentEnv():
             Velocity_history.append(self.Velocity)
             Distance_history.append(self.Distance)
             Optical_history.append(self.Optical_info)
-#            Brakemap_history.append(self.Brake_effectiveness)
+            Brakemap_history.append(self.Brake_effectiveness)
             
         #Plot data    
         time = np.arange(0, self.Time-self.Dt, self.Dt)
-#        data = [Brakemap_history, Acceleration_history, Velocity_history, Distance_history]
-        data = [ Acceleration_history, Velocity_history, Distance_history]
-#        labels = ['Brake Mapping (%)', 'Acceleration (m/sec^2)]', 'Velocity (m/sec)', 'Distance (m)']
-        labels = ['Acceleration (m/sec^2)]', 'Velocity (m/sec)', 'Distance (m)']
+        data = [Brakemap_history, Acceleration_history, Velocity_history, Distance_history]
+        labels = ['Brake Mapping (%)', 'Acceleration (m/sec^2)]', 'Velocity (m/sec)', 'Distance (m)']
         for i in range(len(data)):
             plt.plot(time, data[i])
             plt.xlabel('Time (sec)')
@@ -118,14 +115,15 @@ class AgentEnv():
             plt.show()
 
         ov_labels = ['Image size', 'Image expansion rate', 'Tau', 'Tau-dot', 'Proportional Rate']
+        Optical_history = np.array(Optical_history)
         for i in range(len(self.Optical_info)):
             
-            plt.plot(time, np.array(Optical_history)[:,i])
+            plt.plot(time, Optical_history[:,i])
             plt.xlabel('Time (sec)')
             plt.ylabel(ov_labels[i])
             plt.show()
         
-        
+        return Brakemap_history, Acceleration_history, Velocity_history, Distance_history, Optical_history
         
         
         
