@@ -5,6 +5,7 @@ from datetime import date
 import time
 
 class Microbial():
+    
     def __init__(self, fitnessFunction, popsize, genesize, recombProb, mutatProb):
         self.fitnessFunction = fitnessFunction
         self.popsize = popsize
@@ -15,8 +16,10 @@ class Microbial():
         self.avgHistory = []
         self.bestHistory = []
         self.popHistory = []
+        self.generationsRun = 0
         self.dateCreated = str(date.today())
         self.dateEdited = str(date.today())
+
 
     def showFitnessSummary(self, savename=''):
         plt.plot(self.bestHistory, label="Best")
@@ -25,9 +28,11 @@ class Microbial():
         plt.ylabel("Fitness")
         plt.title("Best and average fitness")
         plt.legend()
-        plt.show()
         if savename !='':
             plt.savefig(savename)
+        plt.show()
+
+            
             
     def showFitnessTrajectories(self, savename='', _alpha=0.1):
         plt.plot(self.popHistory, alpha=_alpha)
@@ -37,9 +42,11 @@ class Microbial():
         plt.ylabel("Fitness")
         plt.title("Best and average fitness")
         plt.legend()
-        plt.show()
         if savename !='':
             plt.savefig(savename)
+        plt.show()
+
+            
             
     def fitStats(self):
 #        bestfit = self.fitnessFunction(self.pop[0])
@@ -57,7 +64,8 @@ class Microbial():
             fitness = self.fitnessFunction(self.pop[i])
             popfit[i] = fitness
         
-        return popfit.mean(), popfit.max(), popfit
+        return popfit.mean(), popfit.max(), popfit.std(), popfit
+
 
     def run(self,tournaments):
 
@@ -69,8 +77,8 @@ class Microbial():
             # Report statistics every generation
             if (i%self.popsize==0):
                 #print(i/self.popsize)
-#                af, bf, bi = self.fitStats()
-                af, bf, pf = self.fitStats()
+                #af, bf, bi = self.fitStats()
+                af, bf, sd, pf = self.fitStats()
                 self.avgHistory.append(af)
                 self.bestHistory.append(bf)
                 self.popHistory.append(pf)
@@ -106,6 +114,7 @@ class Microbial():
                 print('%d %% Complete' % (report_progress))
                 print('Time elapsed: %f sec' % (time.time()-start))
                 report_progress += 10
-                
+        
+        self.generationsRun += (tournaments/self.popsize)
         self.dateEdited = str(date.today())
         
