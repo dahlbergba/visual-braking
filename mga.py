@@ -67,7 +67,7 @@ class Microbial():
         return popfit.mean(), popfit.max(), popfit.std(), popfit
 
 
-    def run(self,tournaments):
+    def run(self, tournaments, report=True):
 
         # Evolutionary loop
         start = time.time()
@@ -110,11 +110,14 @@ class Microbial():
                 if self.pop[loser][l] < -1.0:
                     self.pop[loser][l] = -1.0
 
-            if i/tournaments*100 > report_progress:
-                print('%d %% Complete' % (report_progress))
-                print('Time elapsed: %f sec' % (time.time()-start))
-                report_progress += 10
+            if report==True:    # Print status updates to consode
+                if i/tournaments*100 > report_progress:
+                    print(' \n%d%% Complete' % (report_progress))
+                    print('Fitness Mean=%f, Max=%f, SD=%f' % tuple(self.fitStats()[0:3]))
+                    print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
+                    report_progress += 10
         
+        # Data integrity stuff
         self.generationsRun += (tournaments/self.popsize)
         self.dateEdited = str(date.today())
         
