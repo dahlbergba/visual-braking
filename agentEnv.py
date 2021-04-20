@@ -1,8 +1,9 @@
 from ctrnn import CTRNN
 import math 
 import numpy as np
+import matplotlib.pyplot as plt
 
-class Agent():
+class AgentEnv():
 
 
     def __init__(self, genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt):
@@ -20,10 +21,11 @@ class Agent():
         
         #ENVIRONMENT ATTRIBUTES
         self.Target_size = 0.    # Size of target (m)
-        self.Distance = 0.   # Distance from agent to target (m) 
+        self.Distance = 0.   # Distance from agent to target (m)
+        self.Time = 0.
 
         # OPTICAL ATTRIBUTES
-        self.Optical_variable = 0   # Which optical variable is this agent paying attention to? (0-4)
+        self.Optical_variable = 5   # Which optical variable is this agent paying attention to? (0-4)
         self.Optical_info = [1.,        # (0) Image size
                              1.,        # (1) Image expansion rate
                              1.,        # (2) Tau
@@ -32,10 +34,7 @@ class Agent():
         
         # DATA
         self.Brakemap_history = []
-        self.Acceleration_history = []
-        self.Velocity_history = []
-        self.Distance_history = []
-        self.Optical_history = []
+
         
                 
     def setInitialState(self, velocity, distance, target_size):  # Simulate a few moments of constant motion to initialize the optical variables
@@ -43,13 +42,14 @@ class Agent():
         self.Velocity = velocity
         self.Distance = distance + (steps*self.Dt*self.Velocity)    # Set back initial distance some amount to allow for initial constant motion
         self.Target_size = target_size
+        self.Acceleration = 0.
+        self.Time = 0.
         for step in range(steps):
             self.sense()    # Calculate optical variables
             self.Distance -= self.Velocity * self.Dt    # Move
                     
         
     def sense(self): # Update optical variables and pass to NN controller
-        
         #Calculate optical variables
         image_size = math.atan(self.Target_size/self.Distance)        
         image_expansion_rate = image_size - self.Optical_info[0]     # Difference between image_size and the last image_size (i=0)
@@ -58,19 +58,16 @@ class Agent():
         PR = tau/tau_dot
         self.Optical_info = [image_size, image_expansion_rate, tau, tau_dot, PR]
         
-        # Feed relevant optical variable to NN
-        self.NN.Input = np.full(self.NN.Size, self.Optical_info[self.Optical_variable])   # Vector of length Size full of the selected optical variable
-    
     
     def think(self):    #   Integrate NN controller
-        self.nn.step(self.Dt)
+        self.NN.Input = np.full(self.NN.Size, self.Optical_info[self.Optical_variable])   # Vector of length Size and full of the selected optical variable
+        self.NN.step(self.Dt)
    
     
     def act(self):  # Fetch output from NN controller, calculate action, update agent and environment
-        
         # Calculate acceleration
         motor = 0  # Which neuron is the motor neuron (this is arbitrary, really) 
-        output = self.nn.Output[motor]
+        output = self.NN.Output[motor]
         self.acceleration = (-1) * self.Brake_constant * output * self.Brake_effectiveness
         
         # Calculate velocity 
@@ -78,10 +75,57 @@ class Agent():
         
         # Calculate distance
         self.Distance -= self.Velocity * self.Dt    # Note that the operatior is -= because distance is decreasing
+        self.Time += self.Dt
+
+
+    def record(self):         # Store data, this can be used when analyzing one particular run
+        self.Brakemap_history.append(self.Brake_effectiveness)
+
+
+    def showTrajectory(self, velocity, distance, target_size, optical_variable, trial_length):
+        Acceleration_history = []
+        Velocity_history = []
+        Distance_history = []
+        Optical_history = []
+        #Generate data
+        self.setInitialState(velocity, distance, target_size)
+        self.Optical_variable = optical_variable
+        self.Time = 0
+        # While distance is still positive, agent is still moving forward significantly, and not too much time has elapsed
+        while (self.Distance > 0) and (self.Velocity > 0.005) and (self.Time < trial_length):
+            self.sense()
+            self.think()
+            self.act()
+            Acceleration_history.append(self.Acceleration)
+            Velocity_history.append(self.Velocity)
+            Distance_history.append(self.Distance)
+            Optical_history.append(self.Optical_info)
+            
+        #Plot data    
+        time = np.arange(0, self.Time, self.Dt)
+        data = [self.Brakemap_history, Acceleration_history, Velocity_history, Distance_history]
+        labels = ['Brake Mapping (%)', 'Acceleration (m/sec^2)]', 'Velocity (m/sec)', 'Distance (m)']
+        for i in range(len(data)):
+            plt.plot(time, data[i])
+            plt.xlabel('Time (sec)')
+            plt.ylabel(labels[i])
+            plt.show()
+
+        ov_labels = ['Image size', 'Image expansion rate', 'Tau', 'Tau-dot', 'Proportional Rate']
+        for i in range(len(self.Optical_info)):
+            plt.plot(time, Optical_history[i])
+            plt.xlabel('Time (sec)')
+            plt.ylabel(ov_labels[i])
+            plt.show()
         
-        # Store data
-        self.Brake_eff_history.append(self.Brake_effectiveness)
-        self.Acceleration_history.append(self.Acceleration)
-        self.Velocity_history.append(self.Velocity)
-        self.Distance_history.append(self.Distance)
-        self.Optical_history.append(self.Optical_info)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
