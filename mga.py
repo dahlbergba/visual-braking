@@ -59,12 +59,15 @@ class Microbial():
 #                bestfit = fit
 #                bestind = i
 #         return avgfit/self.popsize, bestfit, popfit, bestind
-        popfit = np.zeros((self.pop.shape[0]))
+        popfit = np.zeros((self.pop.shape[0])) # Vector of population fitnesses
         for i in range(self.pop.shape[0]):
             fitness = self.fitnessFunction(self.pop[i])
             popfit[i] = fitness
         
-        return popfit.mean(), popfit.max(), popfit.std(), popfit
+        bi = popfit.argmax()
+        bg = self.pop[bi]
+        
+        return popfit.mean(), popfit.max(), popfit.std(), bi, bg, popfit
 
 
     def run(self, tournaments, report=True):
@@ -78,7 +81,7 @@ class Microbial():
             if (i%self.popsize==0):
                 #print(i/self.popsize)
                 #af, bf, bi = self.fitStats()
-                af, bf, sd, pf = self.fitStats()
+                af, bf, sd, bi, bg, pf = self.fitStats()
                 self.avgHistory.append(af)
                 self.bestHistory.append(bf)
                 self.popHistory.append(pf)
