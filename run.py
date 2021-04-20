@@ -1,87 +1,80 @@
-from agent import Agent
+from agentEnv import AgentEnv
 from mga import Microbial
 from tools import save, read
 from matplotlib import pyplot as plt
 import numpy as np
 import time
 
-np.random.seed(2)
 
-#TASK PARAMETERS ---------------------------------------------------------------
-Duration = 1000    # Duration of simulation, in steps
+# TASK PARAMETERS ---------------------------------------------------------------
 Dt = 0.01
-#N_task_agents = 2 # Number of copies of agent for the time task
-Stimuli = [0.1, 0.2]    # External input/stimuli for the time task
+#target_size = [45, 55, 65, 75]
+#initial_distance = [120, 135, 150, 165, 180, 205, 210]
+#initial_velocity = [10, 11, 12, 13, 14, 15]
+target_size = [55, 65]
+initial_distance = [150, 165, 180]
+initial_velocity = [12, 13]
+trial_length = 10 # (sec)
+optical_variable = 0
+trials = len(target_size) * len(initial_distance) * len(initial_velocity) 
 
-#CTRNN PARAMETERS --------------------------------------------------------------
-Size = 1
-WeightRange = 15
-BiasRange = 15
-TimeConstMin = Dt*10
-TimeConstMax = 5.0
-InputWeightRange = 15
+# CTRNN PARAMETERS --------------------------------------------------------------
+Size = 2    # Four interneurons plus one motor neuron
+WeightRange = 16
+BiasRange = 16
+TimeConstMin = 1
+TimeConstMax = 10
+InputWeightRange = 16
+GenotypeLength = Size*Size + Size*3
 
-#EA PARAMETERS -----------------------------------------------------------------
-Trials = 5   # N of trials per stimulus
+
+# EA PARAMETERS -----------------------------------------------------------------
 GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the input weight vector
-Population = 100
+Population = 5
 RecombProb = 0.5
 MutatProb = 0.1
-Generations = 200
+Generations = 10
 Tournaments = Generations * Population
 
-#FITNESS FUNCTIONS -------------------------------------------------------------
+# FITNESS FUNCTIONS -------------------------------------------------------------
 
 def fitnessFunction1(genotype):
-    """First version of the fitness function. This one optimizes simply for most actions taken and is 
-    meant to help debug."""
+    """First version of the fitness function. Here we evolve agents simply on their ability to end 
+    the trial near the target - crashes count, too!"""
     
-    agent = Agent(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
-    first_actions = np.empty((len(Stimuli), Trials))
-    for s in range(len(Stimuli)):    # This loops runs each stimulus condition
-            for t in range(Trials):    # This loops run all trials of task
-                actions = np.empty(Duration)
-                agent.sense(Stimuli[s])    # Initial stimulus
-                for step in range(Duration):    # Runtime
-                    agent.think()
-                    actions[step] = agent.act()    # Record agent action
-                    agent.sense(0)    # Under current experimental design, no stimulus available for rest of 
-                    
-                first_actions[s, t] = np.count_nonzero(actions)
-    return np.average(first_actions)/Duration
-
-
-def fitnessFunction2(genotype):
-    """Second version of the fitness function. This one optimizes for the greatest delay to action."""
+    final_distances = np.empty(trials)
+    i = 0
     
-    agent = Agent(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
-    first_actions = np.zeros((len(Stimuli), Trials))    # Changed to zeros for the sake of fitness eval in the event no action is taken
-    for s in range(len(Stimuli)):    # This loops runs each stimulus condition
-            for t in range(Trials):    # This loops run all trials of task
-                actions = np.empty(Duration)
-                agent.sense(Stimuli[s])    # Initial stimulus
-                for step in range(Duration):    # Runtime
+    agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
+    for ts in target_size:
+        for d in initial_distance:
+            for v in initial_velocity:  
+                agent.setInitialState(v, d, ts)
+                agent.Optical_variable = optical_variable
+                # While distance is still positive, agent is still moving forward significantly, and not too much time has elapsed
+                while (agent.Distance > 0) and (agent.Velocity > 0.005) and (agent.Time < trial_length):
+                    agent.sense()
                     agent.think()
-                    actions[step] = agent.act()    # Record agent action
-                    agent.sense(0)    # Under current experimental design, no stimulus available for rest of 
-                    
-                acted = np.where(actions==1)
-                if len(acted[0]) > 0:    # The 0 index is because we need the array's first size dimension
-                    first_actions[s, t] = acted[0][0]   # Record when the agent's first action was 
-                else: 
-                    first_actions[s, t] = 0   # Not acting at all is worst fitness
-                    
-    return np.average(first_actions)/Duration
+                    agent.act()
+    
+                final_distances[i] = agent.Distance
+                i += 1
+
+    return np.average(final_distances)
 
 
 # ============================= RUNTIME ========================================
     
-for s in range(10):
-    Size = s + 1 
-    GenotypeLength = Size*Size + Size*3
-    start = time.time()
-    subject = Microbial(fitnessFunction2, Population, GenotypeLength, RecombProb, MutatProb)
-    subject.run(Tournaments)
-    subject.showFitness2('FigD%i' % Size)
-    save(('delayAction_N%i_P100' % Size), subject)
-    print('TOTAL TIME ELAPSED: %f sec' % (time.time()-start))
+start = time.time()
+#np.random.seed(2)
+print('Number of Evaluation Trials: %i' % trials)    
+
+population = Microbial(fitnessFunction1, Population, GenotypeLength, RecombProb, MutatProb)
+population.run(Tournaments)
+filename = 'FinalDistance_G%i_V%i_%s' % ( int(population.generationsRun), optical_variable, population.dateCreated )
+save(filename, population)
+
+population.showFitnessSummary(('%s_Summary.png' % filename))
+population.showFitnessTrajectories(('%s_Trajectories.png' % filename), _alpha=0.1)
+       
+print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start)))
