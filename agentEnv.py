@@ -14,7 +14,7 @@ class AgentEnv():
         self.NN.setParameters(genotype,WeightRange,BiasRange,TimeConstMin,TimeConstMax,InputWeightRange)
         
         #AGENT ATTRIBUTES
-        self.Brake_constant = 3.    # Scale factor for notor neuron output --> brake force
+        self.Brake_constant = 3.    # Scale factor for motor neuron output --> brake force
         self.Brake_effectiveness = 1.    # This is a scale factor that can be perturbed
         self.Acceleration = 0.   # Brake force that agent is applying (m*m/sec)
         self.Velocity = 0. 
@@ -64,7 +64,8 @@ class AgentEnv():
         # Calculate acceleration
         motor = 0  # Which neuron is the motor neuron (this is arbitrary, really) 
         output = self.NN.Output[motor]
-        self.Acceleration = (-1) * self.Brake_constant * output * self.Brake_effectiveness
+        self.Acceleration = (-1) * output * self.Brake_constant * self.Brake_effectiveness
+#        self.Acceleration = (-1) * output * self.Dt * self.Brake_constant * self.Brake_effectiveness
         
         # Calculate velocity 
         self.Velocity += self.Acceleration * self.Dt
@@ -79,7 +80,6 @@ class AgentEnv():
 
 
     def showTrajectory(self, optical_variable, target_size, distance, velocity, trial_length=100, brakemap=True):
-
         Acceleration_history = []
         Velocity_history = []
         Distance_history = []
@@ -105,11 +105,16 @@ class AgentEnv():
             Brakemap_history.append(self.Brake_effectiveness)
             
         #Plot data    
-        time = np.arange(0, self.Time-self.Dt, self.Dt)
+        time = np.arange(0, self.Time, self.Dt)
         data = [Brakemap_history, Acceleration_history, Velocity_history, Distance_history]
         labels = ['Brake Mapping (%)', 'Acceleration (m/sec^2)]', 'Velocity (m/sec)', 'Distance (m)']
         for i in range(len(data)):
-            plt.plot(time, data[i])
+            try: 
+                plt.plot(time, data[i])
+            except ValueError:
+                time = np.arange(0, self.Time-self.Dt, self.Dt)
+                plt.plot(time, data[i])
+                
             plt.xlabel('Time (sec)')
             plt.ylabel(labels[i])
             plt.show()
