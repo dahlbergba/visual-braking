@@ -6,43 +6,14 @@ import numpy as np
 import time
 
 
-# TASK PARAMETERS ---------------------------------------------------------------
-Dt = 0.1
-target_size = [45, 55, 65, 75]
-initial_distance = [120, 135, 150, 165, 180, 205, 210]
-initial_velocity = [10, 11, 12, 13, 14, 15]
-#target_size = [55, 65]
-#initial_distance = [150, 165, 180]
-#initial_velocity = [12, 13]
-trial_length = 50 # (sec)
-optical_variable = 4
-trials = len(target_size) * len(initial_distance) * len(initial_velocity) 
-
-# CTRNN PARAMETERS --------------------------------------------------------------
-Size = 5    # Four interneurons plus one motor neuron
-WeightRange = 16
-BiasRange = 16
-TimeConstMin = 1
-TimeConstMax = 10
-InputWeightRange = 16
-GenotypeLength = Size*Size + Size*3 
+#==========================================    FITNESS FUNCTIONS    ============================================================
 
 
-# EA PARAMETERS -----------------------------------------------------------------
-GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the input weight vector
-Population = 150
-RecombProb = 0.5
-MutatProb = 0.1
-Generations = 200
-Tournaments = Generations * Population
-
-
-# FITNESS FUNCTIONS -------------------------------------------------------------
-def fitnessFunction1(genotype):
+def FinalDistance(genotype):
     """First version of the fitness function. Here we evolve agents simply on their ability to end 
     the trial near the target - crashes count, too!"""
     
-    final_distances = np.empty(trials)
+    final_distances = np.empty(ntrials)
     i = 0
     
     agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
@@ -63,12 +34,12 @@ def fitnessFunction1(genotype):
     return (1 - np.average(final_distances))
 
 
-def fitnessFunction2(genotype):
+def FinalDistanceNoCrash(genotype):
     """Second version of the fitness function. Here we evolve agents on their ability to end the 
     trial near the target, WITHOUT crashing. Crashes result in a default fitness of the initial 
     distance."""
     
-    final_distances = np.empty(trials)
+    final_distances = np.empty(ntrials)
     i = 0
     
     agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
@@ -92,13 +63,52 @@ def fitnessFunction2(genotype):
     return (1 - np.average(final_distances))
 
 
-def fitnessFunction3(genotype):
-    """Third version of the fitness function. This is the one used in Kadihasanoglu et al. 2015. 
-    Here we evolve agents based on minimizing their final distance, final velocity, and sum jerk."""
+def DistanceVelocity(genotype):
+    """Third version of the fitness function. This is the first one used in Kadihasanoglu et al. 2015. 
+    Here we evolve agents based on minimizing their final distance and final velocity."""
     
-    final_distances = np.empty(trials)
-    final_velocities = np.empty(trials)
-    jerks = np.empty(trials)
+    final_distances = np.empty(ntrials)
+    final_velocities = np.empty(ntrials)
+    jerks = np.empty(ntrials)
+    i = 0
+    
+    agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
+    for ts in target_size:
+        for d in initial_distance:
+            for v in initial_velocity:  
+                agent.setInitialState(v, d, ts)
+                agent.Optical_variable = optical_variable
+                accelerations = []
+                # While agent hasn't crashed, agent is still moving forward significantly, and not too much time has elapsed
+                while (agent.Distance > 0) and (agent.Velocity > 0.005) and (agent.Time < trial_length):
+                    agent.sense()
+                    agent.think()
+                    agent.act()
+                    accelerations.append(agent.Acceleration)
+    
+                if agent.Distance < 0:   # If agent crashed, reset distance to starting position
+                    agent.Distance = d
+                    
+                if agent.Velocity < 0: 
+                    agent.Velocity = v
+                    
+                final_distances[i] = agent.Distance/d
+                final_velocities[i] = agent.Velocity/v
+                jerks[i] = jerk(accelerations)
+                i += 1
+                
+    jweight = 0.
+    fitness= ( (1-np.average(final_distances)) + (1-np.average(final_velocities)) )/2 - jweight*np.average(jerks)
+    return fitness
+
+
+def DistanceVelocityJerk(genotype):
+    """Fourth and final version of the fitness function. This is the second one used in Kadihasanoglu et al. 2015. 
+    Here we evolve agents based on minimizing their final distance, final velocity, and average jerk."""
+    
+    final_distances = np.empty(ntrials)
+    final_velocities = np.empty(ntrials)
+    jerks = np.empty(ntrials)
     i = 0
     
     agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
@@ -126,7 +136,7 @@ def fitnessFunction3(genotype):
                 jerks[i] = jerk(accelerations)
                 i += 1
                 
-    jweight = 0.
+    jweight = 1000.   # This value is the only difference from the above fitness function DistanceVelocity; empirical value from KBB15
     fitness= ( (1-np.average(final_distances)) + (1-np.average(final_velocities)) )/2 - jweight*np.average(jerks)
     return fitness
 
@@ -135,40 +145,76 @@ def jerk(accelerations):
     jerk = 0
     for i in range(1, len(accelerations)):
         jerk += (accelerations[i] - accelerations[i-1])**2
-    return jerk  
-
-#   From didemsmain.cpp
-#           decc2 = - Agent.NervousSystem.NeuronOutput(CIRCUITSIZE)*StepSize*3.0;                           
-#		   //if (fabs(decc2 - decc1) > 0.005) {
-#			   jerk += (decc1 - decc2)*(decc1 - decc2);
-#		   //}
-#	       decc1 = decc2;
+    return jerk 
 
 
-# ============================= RUNTIME ========================================
+#============================================    PARAMETERS     ================================================================
 
 
-# Set up    
-start = time.time()
-#np.random.seed(2)
-print('Number of Evaluation Trials: %i' % trials)    
+# TASK PARAMETERS
+Dt = 0.1
+#target_size = [45, 55, 65, 75]
+#initial_distance = [120, 135, 150, 165, 180, 205, 210]
+#initial_velocity = [10, 11, 12, 13, 14, 15]
+target_size = [55, 65]               # Limited set of parameters for testing
+initial_distance = [150, 165, 180]   # Limited set of parameters for testing
+initial_velocity = [12, 13]          # Limited set of parameters for testing
+trial_length = 50 # (sec), 50 is the DBB15 value
+optical_variable = 0
+fitnessFunction = DistanceVelocityJerk
+ntrials = len(target_size) * len(initial_distance) * len(initial_velocity) 
 
-# Run evolutionary simulation 
-#population = Microbial(fitnessFunction3, Population, GenotypeLength, RecombProb, MutatProb)
-#population.run(Tournaments)
-#filename = 'FinalDistanceNoCrash3_G%i_V%i_%s' % ( int(population.generationsRun), optical_variable, population.dateCreated )
-population = Microbial(fitnessFunction3, Population, GenotypeLength, RecombProb, MutatProb)
-population.run(Tournaments)
-filename = 'DistanceVelocityJerk_G%i_V%i_%s' % ( int(population.generationsRun), optical_variable, population.dateCreated )
-save(filename, population)
 
-# Show graphs and save 
-population.showFitnessSummary(('%s_Summary.png' % filename))
-population.showFitnessTrajectories(('%s_Trajectories.png' % filename), _alpha=0.1) 
- 
-# Show trajectories of best individual
-af, bf, sd, bi, bg, pf = population.fitStats()
-agent = AgentEnv(bg, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
-agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
+# CTRNN PARAMETERS
+Size = 5    # Four interneurons plus one motor neuron
+WeightRange = 16
+BiasRange = 16
+TimeConstMin = 1
+TimeConstMax = 10
+InputWeightRange = 16
+GenotypeLength = Size*Size + Size*3 
 
-print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start)))
+
+# EA PARAMETERS
+GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the input weight vector
+Population = 150    # KBB15 value is 150
+RecombProb = 0.5
+MutatProb = 0.1
+Generations = 100   # No KBB15 value reported
+Tournaments = Generations * Population
+
+
+# ===========================================    RUNTIME    ====================================================================
+
+for oi in range(0, 5):  # Run the below for each of the five optical variables
+    optical_variable = oi
+    print('============  OPTICAL VARIABLE %i  ============' % oi)
+    
+    # Set up    
+    start = time.time()
+    #np.random.seed(2)
+    print('Number of Evaluation Trials: %i' % ntrials)    
+    
+    # Run simulation
+    population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+    population.runTournaments(Tournaments)
+    
+    # Save data
+    ffname = str(population.fitnessFunction.__name__)
+    generation = int(population.generationsRun)
+    popsize = population.popsize
+    date = population.dateCreated
+    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
+    save(filename, population)
+    
+    # Show graphs and save them too
+    population.showFitnessSummary(('%s_Summary.png' % filename))
+    population.showFitnessTrajectories(('%s_Trajectories.png' % filename), _alpha=0.1) 
+     
+    # Show trajectories of best individual
+    af, bf, sd, bi, bg, pf = population.fitStats()
+    agent = AgentEnv(bg, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
+    agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
+    
+    #Report runtime
+    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start)))
