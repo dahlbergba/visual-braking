@@ -38,3 +38,7 @@ DONE:
         >>> With a minimal population (P=10), this evolved in about 5 generations. I ran it to 25. See
         FinalDistance_G25_V0_2021-04-20. 
     >> Demonstrate evolvability of the next version of the task: final distance, crashes don't count. 
+    >> Dt bug: the acceleration values WITH dt scaling vary from 0 to -0.3. Without, 0 to -3.0. But in KBB15, the 
+    authors reported deceleration from 0 to -3. Therefore, I think the Dt scaling is not necessary in my code and was
+    only needed in the KBB15 code because of the way their CTRNN class worked. 
+    >> Agents evolved with only access to one optical variable at a time. 
