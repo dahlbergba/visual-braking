@@ -1,6 +1,6 @@
 import numpy as np
 
-def sigmoid(x):
+def sigmoid(x): # Output ranges from 0-1
     return 1/(1+np.exp(-x))
 
 class CTRNN():
