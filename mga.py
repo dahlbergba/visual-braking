@@ -106,6 +106,12 @@ class Microbial():
         self.generationsRun += (tournaments/self.popsize)
         self.dateEdited = str(date.today())
         
+        # Final status update
+        if report==True:
+            print(' \n100% Complete')
+            print('Fitness Mean=%f, Max=%f, SD=%f' % tuple(self.fitStats()[0:3]))
+            print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
+        
         
     def runEndless(self, filename, interval=15):   # Interval = minutes between saves and reports
         start = time.time()
@@ -120,8 +126,3 @@ class Microbial():
                 print('Fitness Mean=%f, Max=%f, SD=%f' % tuple(self.fitStats()[0:3]))
                 print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
                 last_report = time.time()
-
-
-
-        
-        
