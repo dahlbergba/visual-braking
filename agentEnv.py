@@ -62,16 +62,12 @@ class AgentEnv():
     
     def act(self):  # Fetch output from NN controller, calculate action, update agent and environment
         # Calculate acceleration
-        motor = 0  # Which neuron is the motor neuron (this is arbitrary, really) 
-        output = self.NN.Output[motor]
-        self.Acceleration = (-1) * output * self.Brake_constant * self.Brake_effectiveness
-#        self.Acceleration = (-1) * output * self.Dt * self.Brake_constant * self.Brake_effectiveness
+        motor_neuron = 0  # Pick which neuron is the motor neuron (this is arbitrary, really) 
+        output = self.NN.Output[motor_neuron]
+        self.Acceleration = (-1) * output * self.Brake_constant * self.Brake_effectiveness      # Note the (-1) inversion
         
-        # Calculate velocity 
-        self.Velocity += self.Acceleration * self.Dt
-        
-        # Calculate distance
-        self.Distance -= self.Velocity * self.Dt    # Note that the operatior is -= because distance is decreasing
+        self.Velocity += self.Acceleration * self.Dt         # Calculate velocity         
+        self.Distance -= self.Velocity * self.Dt            # Calculate distance; note the -= operator
         self.Time += self.Dt
 
 
@@ -129,13 +125,4 @@ class AgentEnv():
             plt.show()
         
         return Brakemap_history, Acceleration_history, Velocity_history, Distance_history, Optical_history
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+    
