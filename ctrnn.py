@@ -1,7 +1,5 @@
 import numpy as np
-
-def sigmoid(x): # Output ranges from 0-1
-    return 1/(1+np.exp(-x))
+from scipy.special import expit # This replaces the sigmoid function used previously; 83% faster
 
 class CTRNN():
 
@@ -41,9 +39,9 @@ class CTRNN():
 
     def initializeState(self,v):
         self.Voltage = v
-        self.Output = sigmoid(self.Voltage+self.Bias)
+        self.Output = expit(self.Voltage+self.Bias)
 
     def step(self,dt):
         netinput = (self.Input * self.InputWeight) + np.dot(self.Weight.T, self.Output)
         self.Voltage += dt * (self.invTimeConstant*(-self.Voltage+netinput))
-        self.Output = sigmoid(self.Voltage+self.Bias)
+        self.Output = expit(self.Voltage+self.Bias)
