@@ -195,10 +195,10 @@ elif 5 < i <10: # Other half should be with DistanceVelocityJerk FF
     fitness_function = DistanceVelocityJerk
     optical_variable = i-5
 
+# RUN TOURNAMENTS
 # Run simulation
 population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
 population.runTournaments(Tournaments)
-
 # Save data
 ffname = str(population.fitnessFunction.__name__)
 generation = int(population.generationsRun)
@@ -206,3 +206,15 @@ popsize = population.popsize
 date = population.dateCreated
 filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
 save(filename, population)
+
+
+# RUN ENDLESSLY
+#population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+# Creat filename 
+#ffname = str(population.fitnessFunction.__name__)
+#generation = int(population.generationsRun)
+#popsize = population.popsize
+#date = population.dateCreated
+#filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
+## Run simulation and save
+#population.runEndless(filename)

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#SBATCH -J visual_braking
+#SBATCH -p general
+#SBATCH -o /geode2/home/u060/bdahlber/Carbonate/Desktop/output.out
+#SBATCH -e /geode2/home/u060/bdahlber/Carbonate/Desktop/output.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=bdahlber@iu.edu
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem=8G
+#SBATCH --time=4:00:00
+
+echo $A
+python "/N/u/bdahlber/Carbonate/Desktop/run_carbonate.py" $A
