@@ -101,7 +101,7 @@ class Microbial():
             self.tournament()   # Run one tournament
             if (report==True) and (i/tournaments*100 > report_progress):    # Print status updates to console, if enabled and if it is time
                 print(' \n%d%% Complete' % (report_progress))
-                print('Fitness Mean=%f, Max=%f, SD=%f' % tuple(self.fitStats()[0:3]))
+                print('Fitness Median=%f, Max=%f, IQR=%f' % tuple(self.fitStats()[0:3]))
                 print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
                 report_progress += 10
         
@@ -110,7 +110,7 @@ class Microbial():
         self.dateEdited = str(date.today())
         if report==True:
             print(' \n100% Complete')
-            print('Fitness Mean=%f, Max=%f, SD=%f' % tuple(self.fitStats()[0:3]))
+            print('Fitness Median=%f, Max=%f, IQR=%f' % tuple(self.fitStats()[0:3]))
             print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
         
         
@@ -124,12 +124,14 @@ class Microbial():
                 self.medHistory.append(af)
                 self.bestHistory.append(bf)
                 self.popHistory.append(pf)
+                self.generationsRun += (t/self.popsize)
+                self.dateEdited = str(date.today())
             self.tournament()   # Run one tournament
             if (time.time()-last_report) > (interval*60):     # If it's been more than X minutes since last report/save, save/report
-                print("Saving...")
+                print("\nSaving...")
                 save(filename, self)
-                print(' \nGenerations Run: %f' % self.generationsRun)     # Print generations run so far
-                print('Fitness Mean=%f, Max=%f, SD=%f' % tuple(self.fitStats()[0:3]))
+                print('Generations Run: %i' % int(self.generationsRun))     # Print generations run so far
+                print('Fitness Median=%f, Max=%f, IQR=%f' % tuple(self.fitStats()[0:3]))
                 print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
                 last_report = time.time()
             t += 1
