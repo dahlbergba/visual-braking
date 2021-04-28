@@ -6,6 +6,9 @@ import numpy as np
 import time
 import sys
 
+"""This file is a version of run.py that has been modified to accept a system argument as input and 
+use that to iterate over ten different set ups for evolutionary runs: 5 optical variables X 2 
+fitness functions. """
 
 #==========================================    FITNESS FUNCTIONS    ============================================================
 
@@ -181,13 +184,13 @@ GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the
 Population = 150    # KBB15 value is 150
 RecombProb = 0.5
 MutatProb = 0.1
-Generations = 100 # No KBB15 value reported
+Generations = 1000 # No KBB15 value reported
 Tournaments = Generations * Population
 
 
 # ===========================================    RUNTIME    ====================================================================
 
-i = int(sys.argv[1])    # Gets sys arg from conditions file, i iterates from 0-9
+i = int(sys.argv[1])    # Gets sys arg from conditions.sh file, i iterates from 0-9
 if i < 5:   # Half of the conditions should be with DistanceVelocity FF
     fitnessFunction = DistanceVelocity
     optical_variable = i
@@ -195,26 +198,34 @@ elif 5 < i <10: # Other half should be with DistanceVelocityJerk FF
     fitness_function = DistanceVelocityJerk
     optical_variable = i-5
 
-# RUN TOURNAMENTS
-# Run simulation
+# RUN TOURNAMENTS, SAVING ALONG THE WAY
+save_interval = 25
+start = time.time()
+print('Iterator: %i' % i)  # For reading error files
 population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-population.runTournaments(Tournaments)
-# Save data
-ffname = str(population.fitnessFunction.__name__)
-generation = int(population.generationsRun)
-popsize = population.popsize
-date = population.dateCreated
-filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-save(filename, population)
+for g in range(int(Generations/save_interval)):     # Run X generations and save every Y generations
+    print('Running generations %i - %i...' % (g*save_interval, (g+1)*save_interval))
+    # Run simulation
+    population.runTournaments(Tournaments, report=False)
+    # Save data
+    ffname = str(population.fitnessFunction.__name__)
+    generation = int(population.generationsRun)
+    popsize = population.popsize
+    date = population.dateCreated
+    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
+    save(filename, population)
+    print('%f sec elapsed so far \n' % (time.time()-start) )
 
 
-# RUN ENDLESSLY
+## RUN ENDLESSLY
+#start = time.time()
+#print('Iterator: %i' % i)  # For reading error files
 #population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-# Creat filename 
+## Create filename 
 #ffname = str(population.fitnessFunction.__name__)
 #generation = int(population.generationsRun)
 #popsize = population.popsize
 #date = population.dateCreated
 #filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
 ## Run simulation and save
-#population.runEndless(filename)
+#population.runEndless(filename, interval=30)
