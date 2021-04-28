@@ -157,12 +157,12 @@ def jerk(accelerations):
 
 # TASK PARAMETERS
 Dt = 0.1
-target_size = [45, 55, 65, 75]
-initial_distance = [120, 135, 150, 165, 180, 205, 210]
-initial_velocity = [10, 11, 12, 13, 14, 15]
-#target_size = [55, 65]               # Limited set of parameters for testing
-#initial_distance = [150, 165, 180]   # Limited set of parameters for testing
-#initial_velocity = [12, 13]          # Limited set of parameters for testing
+#target_size = [45, 55, 65, 75]
+#initial_distance = [120, 135, 150, 165, 180, 205, 210]
+#initial_velocity = [10, 11, 12, 13, 14, 15]
+target_size = [55, 65]               # Limited set of parameters for testing
+initial_distance = [150, 165, 180]   # Limited set of parameters for testing
+initial_velocity = [12, 13]          # Limited set of parameters for testing
 trial_length = 50 # (sec), 50 is the DBB15 value
 optical_variable = 0
 fitnessFunction = DistanceVelocity
@@ -181,11 +181,10 @@ GenotypeLength = Size*Size + Size*3
 
 # EA PARAMETERS
 GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the input weight vector
-Population = 150    # KBB15 value is 150
+Population = 15    # KBB15 value is 150
 RecombProb = 0.5
 MutatProb = 0.1
-Generations = 1000 # No KBB15 value reported
-Tournaments = Generations * Population
+Generations = 10 # No KBB15 value reported
 
 
 # ======================================    RUNTIME FUNCTIONS ======================================
@@ -195,32 +194,32 @@ def run_checkpointing(save_interval):
     """Run a set number of tournaments, saving along the way every save_interval generations."""
     start = time.time()
     print('Iterator: %i' % i)  # For reading error files
-    population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+    mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
     for g in range(int(Generations/save_interval)):     # Run X generations and save every Y generations
         print('Running generations %i - %i...' % (g*save_interval, (g+1)*save_interval))
         # Run simulation
-        population.runTournaments(Tournaments, report=False)
+        mga.runTournaments(save_interval*Population, report=False)
         # Save data
-        ffname = str(population.fitnessFunction.__name__)
-        generation = int(population.generationsRun)
-        popsize = population.popsize
-        date = population.dateCreated
+        ffname = str(mga.fitnessFunction.__name__)
+        generation = int(mga.generationsRun)
+        popsize = mga.popsize
+        date = mga.dateCreated
         filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-        save(filename, population)
+        save(filename, mga)
         print('%f sec elapsed so far \n' % (time.time()-start) )
 
 
 def run_endless():
     print('Iterator: %i' % i)  # For reading error files
-    population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+    mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
     # Create filename 
-    ffname = str(population.fitnessFunction.__name__)
-    generation = int(population.generationsRun)
-    popsize = population.popsize
-    date = population.dateCreated
+    ffname = str(mga.fitnessFunction.__name__)
+    generation = int(mga.generationsRun)
+    popsize = mga.popsize
+    date = mga.dateCreated
     filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
     # Run simulation and save
-    population.runEndless(filename, interval=30)
+    mga.runEndless(filename, interval=30)
 
 
 # ===========================================    RUNTIME    ========================================
@@ -231,11 +230,11 @@ i = int(sys.argv[1])    # Gets sys arg from conditions.sh file, i iterates from 
 if i < 5:   # Half of the conditions should be with DistanceVelocity FF
     fitnessFunction = DistanceVelocity
     optical_variable = i
-elif 5 < i <10: # Other half should be with DistanceVelocityJerk FF
+elif 5 <= i < 10: # Other half should be with DistanceVelocityJerk FF
     fitness_function = DistanceVelocityJerk
     optical_variable = i-5
 else:
     print('ERROR: i is out of bounds.')
 
-run_checkpointing(25)    # Run tournaments, all the while saving data every 25 gens
+run_checkpointing(2)    # Run tournaments, all the while saving data every 25 gens
 #run_endless()
