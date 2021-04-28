@@ -15,7 +15,6 @@ def FinalDistance(genotype):
     
     final_distances = np.empty(ntrials)
     i = 0
-    
     agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
     for ts in target_size:
         for d in initial_distance:
@@ -41,7 +40,6 @@ def FinalDistanceNoCrash(genotype):
     
     final_distances = np.empty(ntrials)
     i = 0
-    
     agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
     for ts in target_size:
         for d in initial_distance:
@@ -71,7 +69,6 @@ def DistanceVelocity(genotype):
     final_velocities = np.empty(ntrials)
     jerks = np.empty(ntrials)
     i = 0
-    
     agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
     for ts in target_size:
         for d in initial_distance:
@@ -89,7 +86,7 @@ def DistanceVelocity(genotype):
                 if agent.Distance < 0:   # If agent crashed, reset distance to starting position
                     agent.Distance = d
                     
-                if agent.Velocity < 0: 
+                if agent.Velocity < 0:   # If agent finishes moving backwards, reset velocity to starting velocity
                     agent.Velocity = v
                     
                 final_distances[i] = agent.Distance/d
@@ -110,7 +107,6 @@ def DistanceVelocityJerk(genotype):
     final_velocities = np.empty(ntrials)
     jerks = np.empty(ntrials)
     i = 0
-    
     agent = AgentEnv(genotype, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
     for ts in target_size:
         for d in initial_distance:
@@ -125,10 +121,10 @@ def DistanceVelocityJerk(genotype):
                     agent.act()
                     accelerations.append(agent.Acceleration)
     
-                if agent.Distance < 0:   # if agent crashed, reset distance to starting position
+                if agent.Distance < 0:   # If agent crashed, reset distance to starting position
                     agent.Distance = d
                     
-                if agent.Velocity < 0: 
+                if agent.Velocity < 0:   # If agent finishes moving backwards, reset velocity to starting velocity
                     agent.Velocity = v
                     
                 final_distances[i] = agent.Distance/d
@@ -141,7 +137,7 @@ def DistanceVelocityJerk(genotype):
     return fitness
 
 
-def jerk(accelerations):
+def jerk(accelerations):   # Sub-function used for calculating total jerk in a series of accelerations
     jerk = 0
     for i in range(1, len(accelerations)):
         jerk += (accelerations[i] - accelerations[i-1])**2
@@ -153,14 +149,14 @@ def jerk(accelerations):
 
 # TASK PARAMETERS
 Dt = 0.1
-target_size = [45, 55, 65, 75]
-initial_distance = [120, 135, 150, 165, 180, 205, 210]
-initial_velocity = [10, 11, 12, 13, 14, 15]
-#target_size = [55, 65]               # Limited set of parameters for testing
-#initial_distance = [150, 165, 180]   # Limited set of parameters for testing
-#initial_velocity = [12, 13]          # Limited set of parameters for testing
-trial_length = 50 # (sec), 50 is the DBB15 value
-optical_variable = 0
+#target_size = [45, 55, 65, 75]                            # Full set of parameters for evolutionary runs
+#initial_distance = [120, 135, 150, 165, 180, 205, 210]    # Full set of parameters for evolutionary runs
+#initial_velocity = [10, 11, 12, 13, 14, 15]               # Full set of parameters for evolutionary runs
+target_size = [55, 65]               # Limited set of parameters for testing
+initial_distance = [150, 165, 180]   # Limited set of parameters for testing
+initial_velocity = [12, 13]          # Limited set of parameters for testing
+trial_length = 50       # 50 is the KBB15 value (sec)
+optical_variable = 0     # 0-4 are valid values, See AgentEnv class for glossary
 fitnessFunction = DistanceVelocity
 ntrials = len(target_size) * len(initial_distance) * len(initial_velocity) 
 
@@ -176,8 +172,8 @@ GenotypeLength = Size*Size + Size*3
 
 
 # EA PARAMETERS
-GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the input weight vector
-Population = 150    # KBB15 value is 150
+GenotypeLength = Size*Size + Size*3    # Slightly longer than usual because of encoding of the input weight vector
+Population = 15    # KBB15 value is 150
 RecombProb = 0.5
 MutatProb = 0.1
 Generations = 100 # No KBB15 value reported
@@ -186,19 +182,15 @@ Tournaments = Generations * Population
 
 # ===========================================    RUNTIME    ====================================================================
 
-for oi in range(0, 5):  # Run the below for each of the five   optical variables
+for oi in range(0, 5):  # Run the below for each of the five optical variables
+    # Set up  
+    start = time.time()
     optical_variable = oi
     print('============  OPTICAL VARIABLE %i  ============' % oi)
-    
-    # Set up    
-    start = time.time()
-    #np.random.seed(2)
     print('Number of Evaluation Trials: %i' % ntrials)    
-    
     # Run simulation
     population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
     population.runTournaments(Tournaments)
-    
     # Save data
     ffname = str(population.fitnessFunction.__name__)
     generation = int(population.generationsRun)
@@ -206,15 +198,26 @@ for oi in range(0, 5):  # Run the below for each of the five   optical variables
     date = population.dateCreated
     filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
     save(filename, population)
-    
-    # Show graphs and save them too
-    population.showFitnessSummary(('%s_Summary.png' % filename))
-    population.showFitnessTrajectories(('%s_Trajectories.png' % filename), _alpha=0.1) 
-     
-    # Show trajectories of best individual
-    af, bf, sd, bi, bg, pf = population.fitStats()
-    agent = AgentEnv(bg, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
-    agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
-    
     #Report runtime
-    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start)))
+    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start))) 
+#    # Show graphs and save them too
+#    population.showFitnessSummary(('%s_Summary.png' % filename))
+#    population.showFitnessTrajectories(('%s_Trajectories.png' % filename), _alpha=0.1)   
+#    # Show trajectories of best individual
+#    af, bf, sd, bi, bg, pf = population.fitStats()
+#    agent = AgentEnv(bg, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
+#    agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
+   
+    
+# RUN ENDLESSLY
+#    population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+#     #Creat filename 
+#    ffname = str(population.fitnessFunction.__name__)
+#    generation = int(population.generationsRun)
+#    popsize = population.popsize
+#    date = population.dateCreated
+#    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
+#    # Run simulation and save
+#    population.runEndless(filename, interval=0.5)    
+#    #Report runtime
+#    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start)))
