@@ -188,44 +188,54 @@ Generations = 1000 # No KBB15 value reported
 Tournaments = Generations * Population
 
 
-# ===========================================    RUNTIME    ====================================================================
+# ======================================    RUNTIME FUNCTIONS ======================================
+
+
+def run_checkpointing(save_interval):
+    """Run a set number of tournaments, saving along the way every save_interval generations."""
+    start = time.time()
+    print('Iterator: %i' % i)  # For reading error files
+    population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+    for g in range(int(Generations/save_interval)):     # Run X generations and save every Y generations
+        print('Running generations %i - %i...' % (g*save_interval, (g+1)*save_interval))
+        # Run simulation
+        population.runTournaments(Tournaments, report=False)
+        # Save data
+        ffname = str(population.fitnessFunction.__name__)
+        generation = int(population.generationsRun)
+        popsize = population.popsize
+        date = population.dateCreated
+        filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
+        save(filename, population)
+        print('%f sec elapsed so far \n' % (time.time()-start) )
+
+
+def run_endless():
+    print('Iterator: %i' % i)  # For reading error files
+    population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+    # Create filename 
+    ffname = str(population.fitnessFunction.__name__)
+    generation = int(population.generationsRun)
+    popsize = population.popsize
+    date = population.dateCreated
+    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
+    # Run simulation and save
+    population.runEndless(filename, interval=30)
+
+
+# ===========================================    RUNTIME    ========================================
+
 
 i = int(sys.argv[1])    # Gets sys arg from conditions.sh file, i iterates from 0-9
+
 if i < 5:   # Half of the conditions should be with DistanceVelocity FF
     fitnessFunction = DistanceVelocity
     optical_variable = i
 elif 5 < i <10: # Other half should be with DistanceVelocityJerk FF
     fitness_function = DistanceVelocityJerk
     optical_variable = i-5
+else:
+    print('ERROR: i is out of bounds.')
 
-# RUN TOURNAMENTS, SAVING ALONG THE WAY
-save_interval = 25
-start = time.time()
-print('Iterator: %i' % i)  # For reading error files
-population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-for g in range(int(Generations/save_interval)):     # Run X generations and save every Y generations
-    print('Running generations %i - %i...' % (g*save_interval, (g+1)*save_interval))
-    # Run simulation
-    population.runTournaments(Tournaments, report=False)
-    # Save data
-    ffname = str(population.fitnessFunction.__name__)
-    generation = int(population.generationsRun)
-    popsize = population.popsize
-    date = population.dateCreated
-    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-    save(filename, population)
-    print('%f sec elapsed so far \n' % (time.time()-start) )
-
-
-## RUN ENDLESSLY
-#start = time.time()
-#print('Iterator: %i' % i)  # For reading error files
-#population = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-## Create filename 
-#ffname = str(population.fitnessFunction.__name__)
-#generation = int(population.generationsRun)
-#popsize = population.popsize
-#date = population.dateCreated
-#filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-## Run simulation and save
-#population.runEndless(filename, interval=30)
+run_checkpointing(25)    # Run tournaments, all the while saving data every 25 gens
+#run_endless()
