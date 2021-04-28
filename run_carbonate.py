@@ -231,7 +231,7 @@ if i < 5:   # Half of the conditions should be with DistanceVelocity FF
     fitnessFunction = DistanceVelocity
     optical_variable = i
 elif 5 <= i < 10: # Other half should be with DistanceVelocityJerk FF
-    fitness_function = DistanceVelocityJerk
+    fitnessFunction = DistanceVelocityJerk
     optical_variable = i-5
 else:
     print('ERROR: i is out of bounds.')
