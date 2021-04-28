@@ -8,22 +8,25 @@ and adding a delay between action and perception.
 
 
 NEXT GOALS:
-    >> Evolve agents to use each of the five kinds of visual information. 
-        >>Try this with the acceleration Dt change.
-    >> Evolve agents that have access to all five kinds of visual information. 
-        >>Try this with the acceleration Dt change. 
+
     >> Conduct information analysis on optical variables and deceleration
     >> Evolve agents with perturbations and see how agents handle them. Are some strategies
     more resilient than others?
+        
     
-
 TO DO:
-
+    >> Develop brake force perturbation (probably in FF). 
+    >> Develop position perturbation (probably in FF). 
+    >> Develop delay perturbation (probably in FF). 
 
 
 IN PROGRESS:
-
-
+    >> Evolve agents to use each of the five kinds of visual information. 
+        >>> This was done but I'm going through now and checking for bugs. Some surprising results so far. 
+        >>> Turns out 100 gens is enough to get recognizable braking behavior but its not very good. I have 
+        sent several runs to Carbonate to try to get more generations.
+        >>> I've set up what should be a FINAL run. It will run for 24 hours and save my data along
+        the way, every 30 minutes.
 
 DONE:
     >> I am not sure which values to initialize each optical variable as. This is
@@ -42,3 +45,9 @@ DONE:
     authors reported deceleration from 0 to -3. Therefore, I think the Dt scaling is not necessary in my code and was
     only needed in the KBB15 code because of the way their CTRNN class worked. 
     >> Agents evolved with only access to one optical variable at a time. 
+    >> Fixed bug where fitness history was not being recorded in the runTournaments() method. 
+    >> Go through and make sure everything is well-commented. 
+    >> Check on whether a flush is needed for saving checkpointed data on Carbonate. 
+        >>> It is NOT, because my save() function includes my_file.close(), which automatically 
+        flushes the buffer. Yay foresight!(?)
+
