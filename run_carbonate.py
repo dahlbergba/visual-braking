@@ -157,12 +157,12 @@ def jerk(accelerations):
 
 # TASK PARAMETERS
 Dt = 0.1
-#target_size = [45, 55, 65, 75]
-#initial_distance = [120, 135, 150, 165, 180, 205, 210]
-#initial_velocity = [10, 11, 12, 13, 14, 15]
-target_size = [55, 65]               # Limited set of parameters for testing
-initial_distance = [150, 165, 180]   # Limited set of parameters for testing
-initial_velocity = [12, 13]          # Limited set of parameters for testing
+target_size = [45, 55, 65, 75]
+initial_distance = [120, 135, 150, 165, 180, 205, 210]
+initial_velocity = [10, 11, 12, 13, 14, 15]
+#target_size = [55, 65]               # Limited set of parameters for testing
+#initial_distance = [150, 165, 180]   # Limited set of parameters for testing
+#initial_velocity = [12, 13]          # Limited set of parameters for testing
 trial_length = 50 # (sec), 50 is the DBB15 value
 optical_variable = 0
 fitnessFunction = DistanceVelocity
@@ -181,10 +181,10 @@ GenotypeLength = Size*Size + Size*3
 
 # EA PARAMETERS
 GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the input weight vector
-Population = 15    # KBB15 value is 150
+Population = 150    # KBB15 value is 150
 RecombProb = 0.5
 MutatProb = 0.1
-Generations = 10 # No KBB15 value reported
+Generations = 1000 # No KBB15 value reported
 
 
 # ======================================    RUNTIME FUNCTIONS ======================================
@@ -236,5 +236,5 @@ elif 5 <= i < 10: # Other half should be with DistanceVelocityJerk FF
 else:
     print('ERROR: i is out of bounds.')
 
-run_checkpointing(2)    # Run tournaments, all the while saving data every 25 gens
+run_checkpointing(25)    # Run tournaments, all the while saving data every 25 gens
 #run_endless()
