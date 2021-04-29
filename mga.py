@@ -34,7 +34,7 @@ class Microbial():
 
     def showFitness(self, savename=''):
         plt.plot(self.bestHistory, label="Best")
-        plt.plot(self.avgHistory, label="Median")
+        plt.plot(self.avgHistory, label="Average")
         plt.xlabel("Generations")
         plt.ylabel("Fitness")
         plt.title("Best and Median Fitness")
