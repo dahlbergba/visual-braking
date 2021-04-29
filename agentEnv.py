@@ -49,6 +49,7 @@ class AgentEnv():
         self.Target_size = target_size
         self.Acceleration = 0.
         self.Time = 0.
+        self.NN.initializeState(np.zeros(self.NN.Size))
         for step in range(steps):
             self.sense()    # Calculate optical variables
             self.Distance -= self.Velocity * self.Dt    # Move
@@ -71,6 +72,7 @@ class AgentEnv():
         self.NN.step(self.Dt)
         motor_neuron = 0  # Pick which neuron is the motor neuron (this is arbitrary, really) 
         self.output = self.NN.Output[motor_neuron]   
+    
     
     def act(self):  
         """Read output from CTRNN controller, calculate action, and update the agent and environment. """
