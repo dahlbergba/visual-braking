@@ -27,14 +27,11 @@ InputWeightRange = 16
 GenotypeLength = Size*Size + Size*3 
 
 
-def perturbMapping(filename):
-    pass
 
-def perturbMotorDelay(filename):
-    pass
-
-def perturbPosition(filename, perturbations, jweight, traj_params):
-    """Perturbations should be a vector of position perturbations to be applied at every step. The 
+def perturbationAnalysis(filename, ptype, perturbations, jweight, traj_params, show=True):
+    """Position, Velocity, Mapping, Delay. 
+    
+    Perturbations should be a vector of position perturbations to be applied at every step. The 
     length should be trial_length/Dt. """
     
     # Step 1: Get optical variable data was evolved with (from filename)
@@ -60,14 +57,30 @@ def perturbPosition(filename, perturbations, jweight, traj_params):
                 distance = []
                 velocity = []
                 optical = []
-                    
+                if ptype == 'Delay':
+                    outputs = []
+                    for o in range(perturbations):
+                        outputs.append(0)
+                        
                 # Simulation loop
                 i = 0
                 while (agent.Distance > 0) and (agent.Velocity > 0.005) and (agent.Time < trial_length):
+                    
+                    
                     agent.sense()
                     agent.think()
+                    if ptype == 'Delay':
+                        outputs.append(agent.output)   # Take self.output and append it to end of the list
+                        agent.output = outputs.pop(0)  # Remove first element from list and set it to self.output
+    
                     agent.act()
-                    agent.Distance += perturbations[i]
+                    if ptype == 'Position':
+                        agent.Distance += perturbations[i]
+                    if ptype == 'Velocity':
+                        agent.Velocity += perturbations[i]
+                    if ptype == 'Mapping': 
+                        agent.brake_effectiveness = perturbations[i]
+                        
                     i += 1
                     acceleration.append(agent.Acceleration)    # Record data
                     distance.append(agent.Distance)
@@ -90,22 +103,26 @@ def perturbPosition(filename, perturbations, jweight, traj_params):
                 jerks[trial] = jerk(acceleration)
                 trial += 1
                    
-    # Plot data   
-    for i in range(len(series)):    # This is necessary because of an inconsistent error I was getting
-        time = np.arange(0, trial_length, agent.Dt)
-        l = len(series[i])
-        time = time[:l]
-        plt.plot(time, series[i])            
+    # Plot data 
+    fitness= ( (1-np.average(final_distances)) + (1-np.average(final_velocities)) )/2 - jweight*np.average(jerks)
+    if show == True:
+        for i in range(len(series)):    # This is necessary because of an inconsistent error I was getting
+            time = np.arange(0, trial_length, agent.Dt)
+            l = len(series[i])
+            time = time[:l]
+            plt.plot(time, series[i]) 
+            
         ov_labels = ['Image size', 'Image expansion rate', 'Tau', 'Tau-dot', 'Proportional Rate']
         labels = ['Distance (m)', 'Velocity (m/sec)', 'Acceleration (m/sec^2)]', ov_labels[agent.Optical_variable] ]
         plt.xlabel('Time (sec)')
         plt.ylabel(labels[i])
+        plt.title('%s Perturbation (%s agent)' % (ptype, ov_labels[agent.Optical_variable]))
         plt.show()
+        print('Original Fitness: %f' % data.fitnessFunction(data.bestIndividual))
+        print('Perturbed Fitness: %f' % fitness)
+        
+    return data.fitnessFunction(data.bestIndividual), fitness
 
-    fitness= ( (1-np.average(final_distances)) + (1-np.average(final_velocities)) )/2 - jweight*np.average(jerks)
-    print('Original Fitness: %f' % data.fitnessFunction(data.bestIndividual))
-    print('Perturbed Fitness: %f' % fitness)
-    
 
 def jerk(accelerations):   # Sub-function used for calculating total jerk in a series of accelerations
     jerk = 0
@@ -117,9 +134,9 @@ def jerk(accelerations):   # Sub-function used for calculating total jerk in a s
 # =====================================    RUNTIME    ==============================================
 
 
-interval = 5
+interval = 2.5
 small_perb = 2
-big_perb = 6
+big_perb = 5
 
 position_perturbations = np.zeros(int(50/Dt))
 position_perturbations[int(interval/Dt)] = big_perb
@@ -129,7 +146,8 @@ position_perturbations[int(interval*4/Dt)] = -1 * small_perb
 
 traj_params = (10, 120, 45)    # (v, d, ts)
 #def perturbPosition(filename, perturbations, jweight, traj_params):
-perturbPosition('DistanceVelocityJerk_V2_P150_T168_G_G200_2021-04-29', position_perturbations, 0, traj_params)
+#perturbPosition('DistanceVelocityJerk_V2_P150_T168_G_G200_2021-04-29', position_perturbations, 0, traj_params)
+perturbationAnalysis('DistanceVelocity_V4_test', 'Velocity', position_perturbations, 0, traj_params)
 
 
 
