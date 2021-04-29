@@ -83,7 +83,7 @@ class Microbial():
                 
             ahd[i] = np.average(hd)
             
-        return np.average(ahd)  # Return average of averages
+        return np.average(ahd)/self.genesize  # Return (normalized) average of averages
 
 
     def getConvergence(self):  # Returns the average Hamming distance of all genotypes to the best genotype
@@ -91,7 +91,7 @@ class Microbial():
         for i in range(self.popsize): 
             hd[i] = sum(abs(self.bestIndividual-self.pop[i]))    # Compare the two genotypes and add to vector of HDs
 
-        return np.average(hd)  # Return average Hamming distance to best genotype
+        return np.average(hd)/self.genesize  # Return (normalized) average Hamming distance to best genotype
 
 
     def tournament(self):
