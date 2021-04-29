@@ -184,7 +184,7 @@ GenotypeLength = Size*Size + Size*3    # Slightly longer because of incoding the
 Population = 150    # KBB15 value is 150
 RecombProb = 0.5
 MutatProb = 0.1
-Generations = 1000 # No KBB15 value reported
+Generations = 200 # No KBB15 value reported
 
 
 # ======================================    RUNTIME FUNCTIONS ======================================
@@ -209,19 +209,6 @@ def run_checkpointing(save_interval):
         print('%f sec elapsed so far \n' % (time.time()-start) )
 
 
-def run_endless():
-    print('Iterator: %i' % i)  # For reading error files
-    mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-    # Create filename 
-    ffname = str(mga.fitnessFunction.__name__)
-    generation = int(mga.generationsRun)
-    popsize = mga.popsize
-    date = mga.dateCreated
-    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-    # Run simulation and save
-    mga.runEndless(filename, interval=30)
-
-
 # ===========================================    RUNTIME    ========================================
 
 
@@ -237,4 +224,3 @@ else:
     print('ERROR: i is out of bounds.')
 
 run_checkpointing(25)    # Run tournaments, all the while saving data every 25 gens
-#run_endless()
