@@ -198,7 +198,7 @@ def run_checkpointing(save_interval):
     for g in range(int(Generations/save_interval)):     # Run X generations and save every Y generations
         print('Running generations %i - %i...' % (g*save_interval, (g+1)*save_interval))
         # Run simulation
-        mga.runTournaments(save_interval*Population, report=False)
+        mga.runTournaments(save_interval*Population, report=True)
         # Save data
         ffname = str(mga.fitnessFunction.__name__)
         generation = int(mga.generationsRun)
