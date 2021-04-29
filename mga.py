@@ -22,8 +22,7 @@ class Microbial():
         self.recombProb = recombProb
         self.mutatProb = mutatProb
         self.pop = np.random.rand(popsize,genesize)*2 - 1
-        self.bestIndividual = 'unknown'
-        self.bestGenotype = 'unknown'
+        self.bestIndividual = -1
         self.avgHistory = []    # List of median fitnesses, recorded each generation
         self.bestHistory = []   # List of best fitnesses, recorded each generation
         self.divHistory = []    # List of gene pool diversity (see getDiversity), recorded each generation
@@ -33,11 +32,23 @@ class Microbial():
         self.dateEdited = str(date.today())
 
 
-    def showFitnessSummary(self, savename=''):
+    def showFitness(self, savename=''):
         plt.plot(self.bestHistory, label="Best")
         plt.plot(self.avgHistory, label="Median")
         plt.xlabel("Generations")
         plt.ylabel("Fitness")
+        plt.title("Best and Median Fitness")
+        plt.legend()
+        if savename !='':
+            plt.savefig(savename)
+        plt.show()
+            
+
+    def showDiversity(self, savename=''):
+        plt.plot(self.divHistory, label='Meta-average HD')
+        plt.plot(self.conHistory, label='Average HD to Best')
+        plt.xlabel("Generations")
+        plt.ylabel("Hamming Distance (HD)")
         plt.title("Best and Median Fitness")
         plt.legend()
         if savename !='':
@@ -57,7 +68,6 @@ class Microbial():
                 bestind = i
                 
         self.bestIndividual = bestind
-        self.bestGenotype = self.pop[bestind]        
         return sumfit/self.popsize, bestfit, self.getDiversity(), self.getConvergence()
 
 
@@ -67,9 +77,9 @@ class Microbial():
             a = self.pop[i]
             hd = np.zeros(self.popsize)     # Create temporary vector of Hamming distances from a particular genotype to all others
             for j in range(self.popsize): 
-                b = self.pop[i]
-                c = abs(a-b)    # Compare the two genotypes
-                hd[j] = np.sum(c) # Sum the two genotypes being compared and add to temporary vector of Hamming distances
+                b = self.pop[j]
+                diff = abs(a-b)    # Compare the two genotypes
+                hd[j] = np.sum(diff) # Sum the two genotypes being compared and add to temporary vector of Hamming distances
                 
             ahd[i] = np.average(hd)
             
@@ -79,7 +89,7 @@ class Microbial():
     def getConvergence(self):  # Returns the average Hamming distance of all genotypes to the best genotype
         hd = np.zeros(self.popsize)  
         for i in range(self.popsize): 
-            hd[i] = sum(abs(self.bestGenotype-self.pop[i]))    # Compare the two genotypes and add to vector of HDs
+            hd[i] = sum(abs(self.bestIndividual-self.pop[i]))    # Compare the two genotypes and add to vector of HDs
 
         return np.average(hd)  # Return average Hamming distance to best genotype
 
@@ -129,7 +139,7 @@ class Microbial():
                 
             if (report==True) and (i/tournaments*100 > report_progress):    # If it is time (and if enabled) print status updates to console and iterate
                 print(' \n%d%% Complete' % (report_progress))
-                print('Fitness Median=%f, Max=%f, IQR=%f' % tuple(self.fitStats()[0:3]))
+                print('Fitness Avg=%f, Max=%f, Div=%f, Con=%f' % tuple(self.fitStats()))
                 print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
                 report_progress += 10
         
@@ -138,7 +148,7 @@ class Microbial():
         self.dateEdited = str(date.today())
         if report==True:
             print(' \n100% Complete')
-            print('Fitness Median=%f, Max=%f, IQR=%f' % tuple(self.fitStats()[0:3]))
+            print('Fitness Avg=%f, Max=%f, Div=%f, Con=%f' % tuple(self.fitStats()))
             print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
         
         
@@ -162,7 +172,7 @@ class Microbial():
                 print("\nSaving...")
                 save(filename, self)
                 print('Generations Run: %i' % int(self.generationsRun))     # Print generations run so far
-                print('Fitness Median=%f, Max=%f, IQR=%f' % tuple(self.fitStats()[0:3]))
+                print('Fitness Avg=%f, Max=%f, Div=%f, Con=%f' % tuple(self.fitStats()))
                 print('Time elapsed: %f sec / %f min / %f hours' % ( (time.time()-start), (time.time()-start)/60, (time.time()-start)/3600 )) 
                 last_report = time.time()
                 
