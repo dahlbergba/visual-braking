@@ -149,12 +149,12 @@ def jerk(accelerations):   # Sub-function used for calculating total jerk in a s
 
 # TASK PARAMETERS
 Dt = 0.1
-#target_size = [45, 55, 65, 75]                            # Full set of parameters for evolutionary runs
-#initial_distance = [120, 135, 150, 165, 180, 205, 210]    # Full set of parameters for evolutionary runs
-#initial_velocity = [10, 11, 12, 13, 14, 15]               # Full set of parameters for evolutionary runs
-target_size = [55, 65]               # Limited set of parameters for testing
-initial_distance = [150, 165, 180]   # Limited set of parameters for testing
-initial_velocity = [12, 13]          # Limited set of parameters for testing
+target_size = [45, 55, 65, 75]                            # Full set of parameters for evolutionary runs
+initial_distance = [120, 135, 150, 165, 180, 205, 210]    # Full set of parameters for evolutionary runs
+initial_velocity = [10, 11, 12, 13, 14, 15]               # Full set of parameters for evolutionary runs
+#target_size = [55, 65]               # Limited set of parameters for testing
+#initial_distance = [150, 165, 180]   # Limited set of parameters for testing
+#initial_velocity = [12, 13]          # Limited set of parameters for testing
 trial_length = 50       # 50 is the KBB15 value (sec)
 optical_variable = 0     # 0-4 are valid values, See AgentEnv class for glossary
 fitnessFunction = DistanceVelocity
@@ -173,14 +173,15 @@ GenotypeLength = Size*Size + Size*3
 
 # EA PARAMETERS
 GenotypeLength = Size*Size + Size*3    # Slightly longer than usual because of encoding of the input weight vector
-Population = 15    # KBB15 value is 150
+Population = 150    # KBB15 value is 150
 RecombProb = 0.5
 MutatProb = 0.1
-Generations = 10 # No KBB15 value reported
+Generations = 100 # No KBB15 value reported
 Tournaments = Generations * Population
 
 
-# ===========================================    RUNTIME    ====================================================================
+# ===========================================    RUNTIME FUNCTIONS   ===============================
+
 
 def run_continue(filename, generations, save_interval):
     """Run a set number of tournaments, saving along the way every save_interval generations."""
@@ -189,7 +190,7 @@ def run_continue(filename, generations, save_interval):
     for g in range(int(generations/save_interval)):     # Run X generations and save every Y generations
         print('Running generations %i - %i...' % (g*save_interval, (g+1)*save_interval))
         # Run simulation
-        mga.runTournaments(save_interval*Population, report=True)
+        mga.runTournaments(save_interval*mga.popsize, report=True)
         # Save data
         generation = int(mga.generationsRun)
         date = mga.dateEdited
@@ -197,7 +198,11 @@ def run_continue(filename, generations, save_interval):
         save(filename, mga)
         print('%f sec elapsed so far \n' % (time.time()-start) )
 
-run_continue('DistanceVelocity_V3_P150_T168_G75_2021-04-28', 125, 25)
+
+# ===========================================    RUNTIME   =========================================
+
+
+run_continue('DistanceVelocityJerk_V2_P150_T168_G175_2021-04-28', 25, 25)
 
 
 #for oi in range(0, 5):  # Run the below for each of the five optical variables
@@ -226,4 +231,3 @@ run_continue('DistanceVelocity_V3_P150_T168_G75_2021-04-28', 125, 25)
 #    agent = AgentEnv(bg, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
 #    agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
    
-
