@@ -20,8 +20,9 @@ class AgentEnv():
         #AGENT ATTRIBUTES
         self.Brake_constant = 3.    # Scale factor for motor neuron output --> brake force
         self.Brake_effectiveness = 1.    # This is a scale factor that can be perturbed
+        self.output = 0     # Activation of motor neuron
         self.Acceleration = 0.   # Brake force that agent is applying (m*m/sec)
-        self.Velocity = 0. 
+        self.Velocity = 0.    # Agent's velocity in the direction of the target (m/sec)
         
         #ENVIRONMENT ATTRIBUTES
         self.Target_size = 0.    # Size of target (m)
@@ -65,40 +66,29 @@ class AgentEnv():
         
     
     def think(self):
-        """Integrate CTRNN controller."""
+        """Integrate CTRNN controller and read output."""
         self.NN.Input = np.full(self.NN.Size, self.Optical_info[self.Optical_variable])   # Vector of length Size and full of the selected optical variable
         self.NN.step(self.Dt)
-   
+        motor_neuron = 0  # Pick which neuron is the motor neuron (this is arbitrary, really) 
+        self.output = self.NN.Output[motor_neuron]   
     
     def act(self):  
         """Read output from CTRNN controller, calculate action, and update the agent and environment. """
         # Calculate acceleration
-        motor_neuron = 0  # Pick which neuron is the motor neuron (this is arbitrary, really) 
-        output = self.NN.Output[motor_neuron]
-        self.Acceleration = (-1) * output * self.Brake_constant * self.Brake_effectiveness      # Note the (-1) inversion
+        self.Acceleration = (-1) * self.output * self.Brake_constant * self.Brake_effectiveness      # Note the (-1) inversion
         self.Velocity += self.Acceleration * self.Dt         # Calculate velocity         
         self.Distance -= self.Velocity * self.Dt            # Calculate distance; note the -= operator
         self.Time += self.Dt
 
 
-    def record(self):
-        """This method can be used to store data when analyzing one particular run. Unlike the other
-        kinds of data this class can produce, brake effectiveness is subject to a constant external
-        signal."""
-        self.Brakemap_history.append(self.Brake_effectiveness)
-
-
-    def showTrajectory(self, optical_variable, target_size, distance, velocity, trial_length=100, brakemap=True):
+    def showTrajectory(self, optical_variable, target_size, distance, velocity, trial_length=100):
         """This method runs one simulation given some starting conditions and plots many different 
         variables (both physical and optical) against time. trial_length is the maximum trial length
-        in seconds, and brakemap=True means that there is no changing of the brake mapping. 
-        Alternatively, you can set brakemap to a list or vector of brake mappings of 
-        length trial_length*Dt."""
+        in seconds."""
         Acceleration_history = []
         Velocity_history = []
         Distance_history = []
         Optical_history = []
-        Brakemap_history = []
         #Generate data
         self.setInitialState(velocity, distance, target_size)
         self.Optical_variable = optical_variable
@@ -106,10 +96,6 @@ class AgentEnv():
         i = 0 
         # While distance is still positive, agent is still moving forward significantly, and not too much time has elapsed
         while (self.Distance > 0) and (self.Velocity > 0.005) and (self.Time < trial_length):
-            if brakemap == False:   # If not using a constant brakemapping, then modify brakemapping and iterate
-                self.brake_effectiveness = brakemap[i]
-                i += 1
-                
             self.sense()
             self.think()
             self.act()
@@ -117,12 +103,11 @@ class AgentEnv():
             Velocity_history.append(self.Velocity)
             Distance_history.append(self.Distance)
             Optical_history.append(self.Optical_info)
-            Brakemap_history.append(self.Brake_effectiveness)
             
         #Plot physics data    
         time = np.arange(0, self.Time, self.Dt)
-        data = [Brakemap_history, Acceleration_history, Velocity_history, Distance_history]
-        labels = ['Brake Mapping (%)', 'Acceleration (m/sec^2)]', 'Velocity (m/sec)', 'Distance (m)']
+        data = [Acceleration_history, Velocity_history, Distance_history]
+        labels = ['Acceleration (m/sec^2)]', 'Velocity (m/sec)', 'Distance (m)']
         for i in range(len(data)):    # This is necessary because of an inconsistent error I was getting
             try: 
                 plt.plot(time, data[i])
@@ -143,5 +128,5 @@ class AgentEnv():
             plt.ylabel(ov_labels[i])
             plt.show()
         
-        return Brakemap_history, Acceleration_history, Velocity_history, Distance_history, Optical_history
+        return Acceleration_history, Velocity_history, Distance_history, Optical_history
     
