@@ -6,15 +6,13 @@ from tools import save
 import time
 
 class Microbial():
-    """This class is a modified version of a microbial genetic algorithm class that I got from 
-    E. Izquierdo, which is in turn an implementation of the algorithm proposed in Harvey 2009. My 
-    version of the class records some additional metadata (such as date edited), an additional 
-    visualization method for plotting individual fitness trajectories, different statistics reported
-    in fitStats(), and significant changes to run(). Now there are two options to running 
-    tournaments: it can be done with a preset number of tournaments in mind (runTournaments()) or it
-    can run endlessly, saving along the way, until terminated (runEndless()). Both versions report
-    progress updates and fitness snapshots along the way. They both rely on the same underlying 
-    method, tournament(), which fully constitutes Harvey's MGA."""
+    """This class is a modified version of a microbial genetic algorithm class that I got from E. Izquierdo, which is in turn an
+    implementation of the algorithm proposed in Harvey 2009. My version of the class records some additional metadata (such as 
+    date edited), records the best individual and best genotype, records measures of gene pool diversity and convergence, and 
+    includes significant changes to run(). Now there are two options to running tournaments: it can be done with a preset number
+    of tournaments in mind (runTournaments()) or it can run endlessly, saving along the way, until terminated (runEndless()). 
+    Both versions can report progress updates and fitness snapshots along the way. They both rely on the same underlying method,
+    tournament(), which fully constitutes Harvey's MGA."""
     
     
     def __init__(self, fitnessFunction, popsize, genesize, recombProb, mutatProb):
@@ -24,9 +22,12 @@ class Microbial():
         self.recombProb = recombProb
         self.mutatProb = mutatProb
         self.pop = np.random.rand(popsize,genesize)*2 - 1
-        self.medHistory = []    # List of median fitnesses, recorded each generation
+        self.bestIndividual = 'unknown'
+        self.bestGenotype = 'unknown'
+        self.avgHistory = []    # List of median fitnesses, recorded each generation
         self.bestHistory = []   # List of best fitnesses, recorded each generation
-        self.popHistory = []    # List of the entire population's fitnesses, recorded each generation
+        self.divHistory = []    # List of gene pool diversity (see getDiversity), recorded each generation
+        self.conHistory = []    # List of gene pool convergence (see getConvergence), recorded each generation
         self.generationsRun = 0
         self.dateCreated = str(date.today())
         self.dateEdited = str(date.today())
@@ -34,7 +35,7 @@ class Microbial():
 
     def showFitnessSummary(self, savename=''):
         plt.plot(self.bestHistory, label="Best")
-        plt.plot(self.medHistory, label="Average")
+        plt.plot(self.avgHistory, label="Median")
         plt.xlabel("Generations")
         plt.ylabel("Fitness")
         plt.title("Best and Median Fitness")
@@ -43,30 +44,44 @@ class Microbial():
             plt.savefig(savename)
         plt.show()
             
-            
-    def showFitnessTrajectories(self, savename='', _alpha=0.1):
-        plt.plot(self.popHistory, alpha=_alpha)
-        plt.plot(self.bestHistory, label="Best")
-        plt.plot(self.medHistory, label="Median")
-        plt.xlabel("Generations")
-        plt.ylabel("Fitness")
-        plt.title("Best and Median Fitness")
-        plt.legend()
-        if savename !='':
-            plt.savefig(savename)
-        plt.show()
 
-                        
     def fitStats(self):
-        fits = np.zeros((self.pop.shape[0])) # Create empty vector for population fitnesses
-        for i in range(self.pop.shape[0]):
-            fitness = self.fitnessFunction(self.pop[i])
-            fits[i] = fitness    # Populate vector
+        bestfit = -999999
+        bestind = -1
+        sumfit = 0.0
+        for i in self.pop:
+            f = self.fitnessFunction(i)
+            sumfit += f
+            if (f > bestfit):
+                bestfit = f
+                bestind = i
+                
+        self.bestIndividual = bestind
+        self.bestGenotype = self.pop[bestind]        
+        return sumfit/self.popsize, bestfit, self.getDiversity(), self.getConvergence()
+
+
+    def getDiversity(self):  # Returns average Hamming distance of all genotypes to all their peers
+        ahd = np.zeros(self.popsize)  # Vector of average Hamming distance of *each* genotype to all its peers
+        for i in range(self.popsize): 
+            a = self.pop[i]
+            hd = np.zeros(self.popsize)     # Create temporary vector of Hamming distances from a particular genotype to all others
+            for j in range(self.popsize): 
+                b = self.pop[i]
+                c = abs(a-b)    # Compare the two genotypes
+                hd[j] = np.sum(c) # Sum the two genotypes being compared and add to temporary vector of Hamming distances
+                
+            ahd[i] = np.average(hd)
             
-        iqr = np.percentile(fits, 75) - np.percentile(fits, 25)    # Interquartile range
-        bi = fits.argmax()    # Best individual
-        bg = self.pop[bi]       # Best genome
-        return np.median(fits), np.max(fits), iqr, bi, bg, fits
+        return np.average(ahd)  # Return average of averages
+
+
+    def getConvergence(self):  # Returns the average Hamming distance of all genotypes to the best genotype
+        hd = np.zeros(self.popsize)  
+        for i in range(self.popsize): 
+            hd[i] = sum(abs(self.bestGenotype-self.pop[i]))    # Compare the two genotypes and add to vector of HDs
+
+        return np.average(hd)  # Return average Hamming distance to best genotype
 
 
     def tournament(self):
@@ -104,13 +119,14 @@ class Microbial():
         start = time.time()
         report_progress = 0    # Used later for reporting progress updates to console
         for i in range(tournaments):         # Evolutionary loop
-            if (i%self.popsize==0):             # Every generation, record statistics
-                mf, bf, iqr, bi, bg, pf = self.fitStats()
-                self.medHistory.append(mf)
-                self.bestHistory.append(bf)
-                self.popHistory.append(pf)
-                
             self.tournament()   # Run one tournament
+            if (i%self.popsize==0):             # Every generation, record statistics
+                af, bf, d, c = self.fitStats()
+                self.avgHistory.append(af)
+                self.bestHistory.append(bf)
+                self.divHistory.append(d)
+                self.conHistory.append(c)
+                
             if (report==True) and (i/tournaments*100 > report_progress):    # If it is time (and if enabled) print status updates to console and iterate
                 print(' \n%d%% Complete' % (report_progress))
                 print('Fitness Median=%f, Max=%f, IQR=%f' % tuple(self.fitStats()[0:3]))
@@ -133,15 +149,15 @@ class Microbial():
         last_report = start
         t = 0   # Counter for triggering generational recording of statistics
         while True:  # Evolutionary loop
+            self.tournament()   # Run one tournament
             if (t%self.popsize==0):                 # Record statistics every generation
-                af, bf, sd, bi, bg, pf = self.fitStats()
-                self.medHistory.append(af)
+                af, bf, d, c = self.fitStats()
+                self.avgHistory.append(af)
                 self.bestHistory.append(bf)
-                self.popHistory.append(pf)
-                self.generationsRun += (t/self.popsize)
+                self.divHistory.append(d)
+                self.conHistory.append(c)
                 self.dateEdited = str(date.today())
                 
-            self.tournament()   # Run one tournament
             if (time.time()-last_report) > (interval*60):     # If it's been more than N minutes since last report/save, save/report
                 print("\nSaving...")
                 save(filename, self)
