@@ -182,24 +182,42 @@ Tournaments = Generations * Population
 
 # ===========================================    RUNTIME    ====================================================================
 
-for oi in range(0, 5):  # Run the below for each of the five optical variables
-    # Set up  
+def run_continue(filename, generations, save_interval):
+    """Run a set number of tournaments, saving along the way every save_interval generations."""
     start = time.time()
-    optical_variable = oi
-    print('============  OPTICAL VARIABLE %i  ============' % oi)
-    print('Number of Evaluation Trials: %i' % ntrials)    
-    # Run simulation
-    mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-    mga.runTournaments(Tournaments)
-    # Save data
-    ffname = str(mga.fitnessFunction.__name__)
-    generation = int(mga.generationsRun)
-    popsize = mga.popsize
-    date = mga.dateCreated
-    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-    save(filename, mga)
-    #Report runtime
-    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start))) 
+    mga = read(filename)
+    for g in range(int(generations/save_interval)):     # Run X generations and save every Y generations
+        print('Running generations %i - %i...' % (g*save_interval, (g+1)*save_interval))
+        # Run simulation
+        mga.runTournaments(save_interval*Population, report=True)
+        # Save data
+        generation = int(mga.generationsRun)
+        date = mga.dateEdited
+        filename = '%s_G%i_%s' % (filename[:-14], generation, date)
+        save(filename, mga)
+        print('%f sec elapsed so far \n' % (time.time()-start) )
+
+run_continue('DistanceVelocity_V3_P150_T168_G75_2021-04-28', 125, 25)
+
+
+#for oi in range(0, 5):  # Run the below for each of the five optical variables
+#    # Set up  
+#    start = time.time()
+#    optical_variable = oi
+#    print('============  OPTICAL VARIABLE %i  ============' % oi)
+#    print('Number of Evaluation Trials: %i' % ntrials)    
+#    # Run simulation
+#    mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+#    mga.runTournaments(Tournaments)
+#    # Save data
+#    ffname = str(mga.fitnessFunction.__name__)
+#    generation = int(mga.generationsRun)
+#    popsize = mga.popsize
+#    date = mga.dateCreated
+#    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
+#    save(filename, mga)
+#    #Report runtime
+#    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start))) 
 #    # Show graphs and save them too
 #    mga.showFitnessSummary(('%s_Summary.png' % filename))
 #    mga.showFitnessTrajectories(('%s_Trajectories.png' % filename), _alpha=0.1)   
@@ -208,16 +226,4 @@ for oi in range(0, 5):  # Run the below for each of the five optical variables
 #    agent = AgentEnv(bg, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
 #    agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
    
-    
-# RUN ENDLESSLY
-#    mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-#     #Creat filename 
-#    ffname = str(mga.fitnessFunction.__name__)
-#    generation = int(mga.generationsRun)
-#    popsize = mga.popsize
-#    date = mga.dateCreated
-#    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-#    # Run simulation and save
-#    mga.runEndless(filename, interval=0.5)    
-#    #Report runtime
-#    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start)))
+
