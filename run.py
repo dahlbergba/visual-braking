@@ -149,14 +149,14 @@ def jerk(accelerations):   # Sub-function used for calculating total jerk in a s
 
 # TASK PARAMETERS
 Dt = 0.1
-target_size = [45, 55, 65, 75]                            # Full set of parameters for evolutionary runs
-initial_distance = [120, 135, 150, 165, 180, 205, 210]    # Full set of parameters for evolutionary runs
-initial_velocity = [10, 11, 12, 13, 14, 15]               # Full set of parameters for evolutionary runs
-#target_size = [55, 65]               # Limited set of parameters for testing
-#initial_distance = [150, 165, 180]   # Limited set of parameters for testing
-#initial_velocity = [12, 13]          # Limited set of parameters for testing
+#target_size = [45, 55, 65, 75]                            # Full set of parameters for evolutionary runs
+#initial_distance = [120, 135, 150, 165, 180, 205, 210]    # Full set of parameters for evolutionary runs
+#initial_velocity = [10, 11, 12, 13, 14, 15]               # Full set of parameters for evolutionary runs
+target_size = [55, 65]               # Limited set of parameters for testing
+initial_distance = [150, 165, 180]   # Limited set of parameters for testing
+initial_velocity = [12, 13]          # Limited set of parameters for testing
 trial_length = 50       # 50 is the KBB15 value (sec)
-optical_variable = 0     # 0-4 are valid values, See AgentEnv class for glossary
+optical_variable = 4     # 0-4 are valid values, See AgentEnv class for glossary
 fitnessFunction = DistanceVelocity
 ntrials = len(target_size) * len(initial_distance) * len(initial_velocity) 
 
@@ -173,10 +173,10 @@ GenotypeLength = Size*Size + Size*3
 
 # EA PARAMETERS
 GenotypeLength = Size*Size + Size*3    # Slightly longer than usual because of encoding of the input weight vector
-Population = 150    # KBB15 value is 150
+Population = 20    # KBB15 value is 150
 RecombProb = 0.5
 MutatProb = 0.1
-Generations = 100 # No KBB15 value reported
+Generations = 50 # No KBB15 value reported
 Tournaments = Generations * Population
 
 
@@ -202,32 +202,26 @@ def run_continue(filename, generations, save_interval):
 # ===========================================    RUNTIME   =========================================
 
 
-run_continue('DistanceVelocityJerk_V2_P150_T168_G175_2021-04-28', 25, 25)
+#run_continue('DistanceVelocityJerk_V2_P150_T168_G175_2021-04-28', 25, 25)
 
 
-#for oi in range(0, 5):  # Run the below for each of the five optical variables
-#    # Set up  
-#    start = time.time()
-#    optical_variable = oi
-#    print('============  OPTICAL VARIABLE %i  ============' % oi)
-#    print('Number of Evaluation Trials: %i' % ntrials)    
-#    # Run simulation
-#    mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
-#    mga.runTournaments(Tournaments)
-#    # Save data
-#    ffname = str(mga.fitnessFunction.__name__)
-#    generation = int(mga.generationsRun)
-#    popsize = mga.popsize
-#    date = mga.dateCreated
-#    filename = '%s_V%i_P%i_T%i_G%i_%s' % ( ffname, optical_variable, popsize, ntrials, generation, date)
-#    save(filename, mga)
-#    #Report runtime
-#    print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start))) 
-#    # Show graphs and save them too
-#    mga.showFitnessSummary(('%s_Summary.png' % filename))
-#    mga.showFitnessTrajectories(('%s_Trajectories.png' % filename), _alpha=0.1)   
-#    # Show trajectories of best individual
-#    af, bf, sd, bi, bg, pf = mga.fitStats()
-#    agent = AgentEnv(bg, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
-#    agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
+# Set up  
+start = time.time()
+print('Number of Evaluation Trials: %i' % ntrials)    
+# Run simulation
+mga = Microbial(fitnessFunction, Population, GenotypeLength, RecombProb, MutatProb)
+mga.runTournaments(Tournaments)
+# Save data
+ffname = str(mga.fitnessFunction.__name__)
+generation = int(mga.generationsRun)
+filename = '%s_V%i_test' % ( ffname, optical_variable)
+save(filename, mga)
+#Report runtime
+print('TOTAL TIME ELAPSED: %i sec' % (int(time.time()-start))) 
+# Show graphs and save them too
+mga.showFitness()
+mga.showDiversity()
+# Show trajectories of best individual
+agent = AgentEnv(mga.bestIndividual, Size, WeightRange, BiasRange, TimeConstMin, TimeConstMax, InputWeightRange, Dt)
+agent.showTrajectory(optical_variable, target_size[0], initial_distance[0], initial_velocity[0])
    
