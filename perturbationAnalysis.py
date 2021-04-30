@@ -29,10 +29,12 @@ GenotypeLength = Size*Size + Size*3
 
 
 def perturbationAnalysis(filename, ptype, perturbations, jweight, traj_params, show=True):
-    """Position, Velocity, Mapping, Delay. 
-    
-    Perturbations should be a vector of position perturbations to be applied at every step. The 
-    length should be trial_length/Dt. """
+    """Valid value for ptype are 'Position', 'Velocity', 'Mapping', and 'Delay'. Perturbations 
+    should be a vector of perturbation values to be iterated through and applied at every step. The 
+    length should be trial_length/Dt. The exception for this is in the case of Delay perturbations,
+    in which case perturbations should be an integer representing the number of time steps to delay 
+    motor output by. Suggested value for jweight are 0 or 1000 (KBB15). traj_params should be a 
+    tuple of (initial velocity, initial distance, target size)."""
     
     # Step 1: Get optical variable data was evolved with (from filename)
     data = read(filename)
@@ -111,13 +113,12 @@ def perturbationAnalysis(filename, ptype, perturbations, jweight, traj_params, s
             l = len(series[i])
             time = time[:l]
             plt.plot(time, series[i]) 
-            
-        ov_labels = ['Image size', 'Image expansion rate', 'Tau', 'Tau-dot', 'Proportional Rate']
-        labels = ['Distance (m)', 'Velocity (m/sec)', 'Acceleration (m/sec^2)]', ov_labels[agent.Optical_variable] ]
-        plt.xlabel('Time (sec)')
-        plt.ylabel(labels[i])
-        plt.title('%s Perturbation (%s agent)' % (ptype, ov_labels[agent.Optical_variable]))
-        plt.show()
+            ov_labels = ['Image size', 'Image expansion rate', 'Tau', 'Tau-dot', 'Proportional Rate']
+            labels = ['Distance (m)', 'Velocity (m/sec)', 'Acceleration (m/sec^2)]', ov_labels[agent.Optical_variable] ]
+            plt.xlabel('Time (sec)')
+            plt.ylabel(labels[i])
+            plt.title('%s Perturbation (%s agent)' % (ptype, ov_labels[agent.Optical_variable]))
+            plt.show()
         print('Original Fitness: %f' % data.fitnessFunction(data.bestIndividual))
         print('Perturbed Fitness: %f' % fitness)
         
@@ -133,32 +134,33 @@ def jerk(accelerations):   # Sub-function used for calculating total jerk in a s
 
 # =====================================    RUNTIME    ==============================================
 
-
+# Creating position perturbations
 interval = 2.5
 small_perb = 2
 big_perb = 5
-
 position_perturbations = np.zeros(int(50/Dt))
 position_perturbations[int(interval/Dt)] = big_perb
 position_perturbations[int(interval*2/Dt)] = -1 * big_perb
 position_perturbations[int(interval*3/Dt)] = small_perb
 position_perturbations[int(interval*4/Dt)] = -1 * small_perb
 
+# Creating velocity perturbations
+interval = 2.5
+small_perb = 2
+big_perb = 5
+velocity_perturbations = np.zeros(int(50/Dt))
+velocity_perturbations[int(interval/Dt)] = big_perb
+velocity_perturbations[int(interval*2/Dt)] = -1 * big_perb
+velocity_perturbations[int(interval*3/Dt)] = small_perb
+velocity_perturbations[int(interval*4/Dt)] = -1 * small_perb
+
+# Creating mapping perturbations
+mapping_perturbations = np.full((int(50/Dt)), 1)
+
+# Delay perturbation
+delay = 3
+
+# Which set of parameters to use for trajectory plots?
 traj_params = (10, 120, 45)    # (v, d, ts)
-#def perturbPosition(filename, perturbations, jweight, traj_params):
-#perturbPosition('DistanceVelocityJerk_V2_P150_T168_G_G200_2021-04-29', position_perturbations, 0, traj_params)
-perturbationAnalysis('DistanceVelocity_V4_test', 'Velocity', position_perturbations, 0, traj_params)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+perturbationAnalysis('DistanceVelocity_V4_test', 'Delay', delay, 0, traj_params)
