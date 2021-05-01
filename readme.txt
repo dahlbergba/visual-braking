@@ -1,4 +1,4 @@
-===================================================    OVERVIEW    =============================================================
+=============================================    OVERVIEW    =======================================================
 
 The goal of this project is to evolve a visually guided braking agent, as proposed in
 Kadhihasanoglu et al. 2015. After that, I'll be extending the work by applying several
@@ -9,7 +9,7 @@ and adding a delay between action and perception.
 
 
 
-=================================================    ARCHITECTURE    ============================================================
+===========================================    ARCHITECTURE    ======================================================
 
 Evolutionary runs on a local machine are performed by executing run.py, which contains all parameters and fitness functions
 needed. This file calls on mga.py to create an instance of the Microbial class, which is what performs the steps of the 
@@ -26,7 +26,7 @@ has the advantage of running every evolutionary run in parallel, though runtimes
 
 
 
-==============================================    PROGRESS TRACKING   ==========================================================
+========================================    PROGRESS TRACKING   ====================================================
 
 
 NEXT GOALS:
