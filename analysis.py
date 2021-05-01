@@ -77,13 +77,13 @@ class analyzedData():
                         series = [distance, velocity, acceleration, optical]
                         time = agent.Time
 
-                    if agent.Distance < 0:   # If agent crashed, reset distance to starting position
-                        agent.Distance = d
-                        crashes += 1
-
                     if agent.Distance > 15:  # If agent stopped prematurely
                         early_stops += 1
 
+                    if agent.Distance < 0:   # If agent crashed, reset distance to starting position
+                        agent.Distance = d
+                        crashes += 1
+                        
                     if agent.Time > trial_length:  # If agent never stops/times out
                         timeouts += 1
 
@@ -282,8 +282,6 @@ for i in [1.5, 1.5, 1.0, 0.5, 0.5]:
     mapping_perturbations = np.concatenate((mapping_perturbations, m))
 l = 500 - mapping_perturbations.shape[0]
 mapping_perturbations = np.concatenate((mapping_perturbations, np.full(l, 1)))
-print(mapping_perturbations)
-print(mapping_perturbations.shape)
 
 # Delay perturbation
 delay = 3
