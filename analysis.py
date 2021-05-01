@@ -20,6 +20,7 @@ class analyzedData():
         self.filename = filename
         self.data = read(filename)
         self.Optical_variable = int(filename[len(self.data.fitnessFunction.__name__)+2])
+        
 
 
     def save(self):
@@ -30,6 +31,7 @@ class analyzedData():
         fits = np.zeros(self.data.popsize)
         for i in range(self.data.popsize):
             fits[i] = self.data.fitnessFunction(self.data.pop[i])
+        self.bestIndividual = self.data.pop[fits.argmax()]
         self.top25FitnessMean = np.sort(fits)[self.data.popsize-25:]
         self.bestFitness = np.sort(fits)[-1]
 
@@ -39,7 +41,7 @@ class analyzedData():
         tuple of (initial velocity, initial distance, target size)."""
 
         # Step 1: Get genotype of best individual
-        genotype = self.data.bestIndividual
+        genotype = self.bestIndividual
 
         # Step 2: Run simulation
         final_distances = np.empty(ntrials)
@@ -123,7 +125,7 @@ def perturbationAnalysis(self, ptype, perturbations, traj_params=(), show=True):
     tuple of (initial velocity, initial distance, target size)."""
 
     # Step 1: Get genotype of best individual
-    genotype = self.data.bestIndividual
+    genotype = self.bestIndividual
 
     # Step 2: Run simulation
     final_distances = np.empty(ntrials)
@@ -208,7 +210,7 @@ def perturbationAnalysis(self, ptype, perturbations, traj_params=(), show=True):
             plt.ylabel(labels[i])
             plt.title('%s Perturbation (%s agent)' % (ptype, ov_labels[agent.Optical_variable]))
             plt.show()
-        print('Original Fitness: %f' % self.data.fitnessFunction(self.data.bestIndividual))
+        print('Original Fitness: %f' % self.bestFitness)
         print('Perturbed Fitness: %f' % fitness)
 
     successes = trials - crashes - early_stops - timeouts
