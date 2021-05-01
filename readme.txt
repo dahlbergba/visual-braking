@@ -1,4 +1,4 @@
-README ----
+===================================================    OVERVIEW    =============================================================
 
 The goal of this project is to evolve a visually guided braking agent, as proposed in
 Kadhihasanoglu et al. 2015. After that, I'll be extending the work by applying several
@@ -7,26 +7,32 @@ and adding a delay between action and perception.
 
 
 
-NEXT GOALS:
 
-    >> Conduct information analysis on optical variables and deceleration
-    >> Evolve agents with perturbations and see how agents handle them. Are some strategies
-    more resilient than others?
+
+=================================================    ARCHITECTURE    ============================================================
+
+Evolutionary runs on a local machine are performed by executing run.py, which contains all parameters and fitness functions
+needed. This file calls on mga.py to create an instance of the Microbial class, which is what performs the steps of the 
+evolutionary algorithm and stores the results. The fitness function calls on agentEnv.py to create an instance of agentEnv, 
+which simulates the physics of the environment and the agent. Creating this instance in turn calls on ctrnn.py to create an
+instance of CTRNN that serves as the controller for agentEnv. Data can be saved and read using the short function in tools.py. A
+saved data file can be opened and analyzed using analysis.py
+
+
+
+==============================================    PROGRESS TRACKING   ==========================================================
+
+
+NEXT GOALS:
+    How can the perturbation methods be more elegant and encompass more conditions?
+    Why does the fitness function take so long?
         
     
 TO DO:
-    >> Develop brake force perturbation (probably in FF). 
-    >> Develop position perturbation (probably in FF). 
-    >> Develop delay perturbation (probably in FF). 
-
+    Debug fitness measures in analyzedData.trialAnalysis() method. 
 
 IN PROGRESS:
-    >> Evolve agents to use each of the five kinds of visual information. 
-        >>> This was done but I'm going through now and checking for bugs. Some surprising results so far. 
-        >>> Turns out 100 gens is enough to get recognizable braking behavior but its not very good. I have 
-        sent several runs to Carbonate to try to get more generations.
-        >>> I've set up what should be a FINAL run. It will run for 24 hours and save my data along
-        the way, every 30 minutes.
+
 
 DONE:
     >> I am not sure which values to initialize each optical variable as. This is
@@ -50,4 +56,14 @@ DONE:
     >> Check on whether a flush is needed for saving checkpointed data on Carbonate. 
         >>> It is NOT, because my save() function includes my_file.close(), which automatically 
         flushes the buffer. Yay foresight!(?)
-
+    >> Conduct information analysis on optical variables and deceleration
+    >> Evolve agents to use each of the five kinds of visual information. 
+        >>> This was done but I'm going through now and checking for bugs. Some surprising results so far. 
+        >>> Turns out 100 gens is enough to get recognizable braking behavior but its not very good. I have 
+        sent several runs to Carbonate to try to get more generations.
+        >>> I've set up what should be a FINAL run. It will run for 24 hours and save my data along
+        the way, every 30 minutes.    
+        >> Evolve agents with perturbations and see how agents handle them. 
+    >> Develop brake force perturbation (probably in FF). 
+    >> Develop position perturbation (probably in FF). 
+    >> Develop delay perturbation (probably in FF). 
