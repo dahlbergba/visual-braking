@@ -16,7 +16,13 @@ needed. This file calls on mga.py to create an instance of the Microbial class, 
 evolutionary algorithm and stores the results. The fitness function calls on agentEnv.py to create an instance of agentEnv, 
 which simulates the physics of the environment and the agent. Creating this instance in turn calls on ctrnn.py to create an
 instance of CTRNN that serves as the controller for agentEnv. Data can be saved and read using the short function in tools.py. A
-saved data file can be opened and analyzed using analysis.py
+saved data file can be opened and analyzed using analysis.py. 
+
+The run time is fairly long, so the evolutionary runs can also be performed using IU Carbonate. To do this, execute conditions.sh
+on a Carbonate remote desktop. This will iterate a system argument from 0-9 and call on visualbraking.script each time, passing along
+the system argument. This file submits a job to IU Carbonate consisting of running run_carbonate.py with the aforementioned system
+argument, which specifies which of the 10 possible configurations of fitness function (2) and optical variable (5) to use. This 
+has the advantage of running every evolutionary run in parallel, though runtimes are still very long (often >10 hrs). 
 
 
 
